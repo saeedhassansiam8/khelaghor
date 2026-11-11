@@ -76,3 +76,9 @@ the deploy above — the site is complete and ready.
   public muse.ai link still exists.
 - Live two-phone multiplayer is gone (PeerJS was removed to allow sharing);
   the site is single-player.
+
+## License
+
+Proprietary — all rights reserved. See [LICENSE](LICENSE). No part of this
+repository may be copied, modified, redistributed, or used to create a
+website, app, or game without the written permission of Rakibul Hasan.
