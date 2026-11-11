@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Admin · খেলাঘর (Khelaghor)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@500;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --green:#1e8a49; --green-d:#14663a; --cream:#fffdf4; --ink:#22301f; --gold:#ffd83d; --red:#e4572e; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Hind Siliguri",system-ui,sans-serif; background:#eef6e9; color:var(--ink); }
+    header { background:var(--green); color:#fff; padding:18px 16px; text-align:center; }
+    header h1 { font-family:"Baloo Da 2",cursive; margin:0; font-size:30px; }
+    header p { margin:4px 0 0; opacity:.9; font-size:14px; }
+    main { max-width:640px; margin:0 auto; padding:16px 12px 60px; }
+    .card { background:#fff; border-radius:16px; padding:18px; box-shadow:0 4px 16px rgba(20,50,25,.10); margin-bottom:14px; }
+    .badge { display:inline-block; border-radius:999px; padding:3px 12px; font-size:13px; font-weight:700; }
+    .badge.ok { background:#d8f3dc; color:#14663a; }
+    .badge.warn { background:#ffe9a8; color:#7a5b00; }
+    label { display:block; font-weight:700; font-size:14px; margin:12px 0 4px; }
+    input[type=text], input[type=number], input[type=password], select { width:100%; padding:10px 12px; border:2px solid #cfe3c8; border-radius:10px; font-size:16px; font-family:inherit; }
+    input[type=color] { width:64px; height:40px; border:2px solid #cfe3c8; border-radius:10px; background:#fff; padding:2px; }
+    .row { display:flex; gap:10px; align-items:flex-end; }
+    .row > * { flex:1; }
+    .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    button { font-family:inherit; font-weight:700; font-size:16px; border:0; border-radius:12px; padding:12px 18px; cursor:pointer; }
+    .btn-green { background:var(--green); color:#fff; width:100%; }
+    .btn-gold { background:var(--gold); color:#5b4a00; }
+    .btn-ghost { background:#eef6e9; color:var(--green-d); }
+    .btn-danger { background:#fde8e8; color:#a11; }
+    .tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+    .tabs button { flex:1; padding:10px 6px; font-size:14px; background:#fff; color:var(--green-d); border:2px solid #cfe3c8; }
+    .tabs button.on { background:var(--green); color:#fff; border-color:var(--green); }
+    .tabpage { display:none; } .tabpage.on { display:block; }
+    .shop-row { display:flex; gap:8px; align-items:center; padding:9px 0; border-bottom:1px solid #eef3e6; }
+    .shop-row .sw { width:26px; height:26px; border-radius:8px; flex:none; }
+    .shop-row .nm { flex:1; font-weight:700; }
+    .shop-row .nm small { display:block; font-weight:400; color:#6b7a5e; font-size:12.5px; }
+    .shop-row input { width:90px; flex:none; }
+    .hint { font-size:13px; color:#6b7a5e; line-height:1.5; }
+    .status { font-weight:700; margin-top:10px; min-height:22px; }
+    .status.ok { color:var(--green-d); } .status.err { color:#a11; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    td, th { padding:7px 4px; border-bottom:1px solid #eef3e6; text-align:left; }
+    .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .stat-box { background:#eef6e9; border-radius:12px; padding:12px; text-align:center; }
+    .stat-box .n { font-size:26px; font-weight:800; color:var(--green-d); }
+    .stat-box .l { font-size:13px; color:#6b7a5e; }
+    #saveBar { position:sticky; bottom:10px; background:#fff; border-radius:14px; box-shadow:0 6px 20px rgba(20,50,25,.20); padding:12px; display:flex; gap:10px; align-items:center; }
+    #saveBar .status { flex:1; margin:0; }
+    .backlink { text-align:center; margin-top:14px; } .backlink a { color:var(--green-d); font-weight:700; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔐 খেলাঘর Admin</h1>
+    <p>Khelaghor control panel — শুধু তোমার জন্য</p>
+  </header>
+  <main>
+    <div class="card" style="text-align:center">
+      <span id="backendBadge" class="badge warn">চেক করা হচ্ছে…</span>
+      <p class="hint" id="backendHint" style="margin:8px 0 0"></p>
+    </div>
+
+    <!-- first-time setup -->
+    <div class="card" id="setupCard" hidden>
+      <h2 style="margin:0 0 6px">👋 প্রথমবার: Admin পাসওয়ার্ড বানাও</h2>
+      <p class="hint">এই পাসওয়ার্ড দিয়েই পরে Admin খুলবে। পাসওয়ার্ড কোথাও plain text-এ সেভ হয় না — শুধু এর hash সেভ হয়। ভালো পাসওয়ার্ড দাও (কমপক্ষে ৬ অক্ষর)।</p>
+      <label>নতুন পাসওয়ার্ড</label>
+      <input type="password" id="setupPass1" autocomplete="new-password" />
+      <label>আবার লেখো</label>
+      <input type="password" id="setupPass2" autocomplete="new-password" />
+      <div style="height:12px"></div>
+      <button class="btn-green" id="setupBtn">পাসওয়ার্ড সেট করো</button>
+      <div class="status" id="setupStatus"></div>
+    </div>
+
+    <!-- login -->
+    <div class="card" id="loginCard" hidden>
+      <h2 style="margin:0 0 6px">🔑 Admin লগইন</h2>
+      <label>পাসওয়ার্ড</label>
+      <input type="password" id="loginPass" autocomplete="current-password" />
+      <div style="height:12px"></div>
+      <button class="btn-green" id="loginBtn">ঢোকো</button>
+      <div class="status" id="loginStatus"></div>
+    </div>
+
+    <!-- panel -->
+    <div id="panel" hidden>
+      <div class="tabs">
+        <button data-tab="game" class="on">🎮 খেলা</button>
+        <button data-tab="coins">🪙 কয়েন</button>
+        <button data-tab="shop">🛍️ দোকান</button>
+        <button data-tab="features">⚙️ ফিচার</button>
+        <button data-tab="stats">📊 পরিসংখ্যান</button>
+      </div>
+
+      <div class="card tabpage on" id="tab-game">
+        <label>ম্যাচের সময় (সেকেন্ড)</label>
+        <input type="number" id="f-matchLen" min="30" max="600" step="10" />
+        <label>নতুন খেলোয়াড়ের ডিফল্ট difficulty</label>
+        <select id="f-defaultDiff">
+          <option value="easy">সহজ (Easy)</option>
+          <option value="medium">মাঝারি (Medium)</option>
+          <option value="hard">কঠিন (Hard)</option>
+        </select>
+        <label>ট্যাগারের গতি (প্রতি লেভেল)</label>
+        <div class="grid3">
+          <div><label>সহজ</label><input type="number" id="f-diff-easy-tagSpd" step="0.05" min="0.3" max="2" /></div>
+          <div><label>মাঝারি</label><input type="number" id="f-diff-medium-tagSpd" step="0.05" min="0.3" max="2" /></div>
+          <div><label>কঠিন</label><input type="number" id="f-diff-hard-tagSpd" step="0.05" min="0.3" max="2" /></div>
+        </div>
+        <label>AI রানারের গতি (প্রতি লেভেল)</label>
+        <div class="grid3">
+          <div><label>সহজ</label><input type="number" id="f-diff-easy-aiSpd" step="0.05" min="0.3" max="2" /></div>
+          <div><label>মাঝারি</label><input type="number" id="f-diff-medium-aiSpd" step="0.05" min="0.3" max="2" /></div>
+          <div><label>কঠিন</label><input type="number" id="f-diff-hard-aiSpd" step="0.05" min="0.3" max="2" /></div>
+        </div>
+        <label>📢 হোমপেজ ঘোষণা (খালি রাখলে দেখাবে না)</label>
+        <input type="text" id="f-announcement" placeholder="যেমন: ঈদে নতুন গেম আসছে!" />
+      </div>
+
+      <div class="card tabpage" id="tab-coins">
+        <div class="row">
+          <div><label>গোল (সাধারণ রানার)</label><input type="number" id="c-goal" min="0" max="100" /></div>
+          <div><label>গোল (গোডা)</label><input type="number" id="c-goalCaptain" min="0" max="100" /></div>
+        </div>
+        <div class="row">
+          <div><label>পারফেক্ট ব্রেক বোনাস</label><input type="number" id="c-perfectBreak" min="0" max="100" /></div>
+          <div><label>স্ট্রিক বোনাস (প্রতি ধাপ)</label><input type="number" id="c-streakStep" min="0" max="100" /></div>
+        </div>
+        <div class="row">
+          <div><label>কাটাকাটি (সাধারণ)</label><input type="number" id="c-dodge" min="0" max="100" /></div>
+          <div><label>কাটাকাটি (গোডা)</label><input type="number" id="c-dodgeCaptain" min="0" max="100" /></div>
+        </div>
+        <div class="row">
+          <div><label>ট্যাগ করলে</label><input type="number" id="c-tag" min="0" max="100" /></div>
+          <div><label>ডেইলি রিওয়ার্ড</label><input type="number" id="c-daily" min="0" max="1000" /></div>
+        </div>
+        <div class="row">
+          <div><label>ম্যাচ জিতলে</label><input type="number" id="c-win" min="0" max="200" /></div>
+          <div><label>ম্যাচ ড্র হলে</label><input type="number" id="c-draw" min="0" max="200" /></div>
+        </div>
+      </div>
+
+      <div class="card tabpage" id="tab-shop">
+        <h3 style="margin:0 0 4px">👕 জার্সি</h3>
+        <div id="shopSkins"></div>
+        <h3 style="margin:16px 0 4px">🌿 মাঠ</h3>
+        <div id="shopThemes"></div>
+        <h3 style="margin:16px 0 4px">⚡ পাওয়ার-আপ</h3>
+        <div class="row">
+          <div><label>স্পিড বুস্ট</label><input type="number" id="p-boost" min="0" max="500" /></div>
+          <div><label>এক্সট্রা লাইফ</label><input type="number" id="p-life" min="0" max="500" /></div>
+        </div>
+        <div class="row">
+          <div><label>ড্যাশ আপগ্রেড</label><input type="number" id="p-dash" min="0" max="1000" /></div>
+          <div><label>টার্বো বুটস</label><input type="number" id="p-turbo" min="0" max="1000" /></div>
+        </div>
+        <h3 style="margin:18px 0 4px">➕ নতুন জার্সি যোগ করো</h3>
+        <div class="row">
+          <div><label>নাম (বাংলা)</label><input type="text" id="ns-bn" placeholder="যেমন: বেগুনি জার্সি" /></div>
+          <div><label>নাম (English)</label><input type="text" id="ns-en" placeholder="Purple Jersey" /></div>
+          <div style="flex:0 0 70px"><label>রং</label><input type="color" id="ns-color" value="#7b4bb5" /></div>
+        </div>
+        <div class="row">
+          <div><label>দাম (কয়েন)</label><input type="number" id="ns-price" min="0" max="1000" value="100" /></div>
+          <div><label>&nbsp;</label><button class="btn-gold" id="addSkinBtn" style="width:100%">যোগ করো</button></div>
+        </div>
+        <h3 style="margin:18px 0 4px">➕ নতুন মাঠ যোগ করো</h3>
+        <div class="row">
+          <div><label>নাম (বাংলা)</label><input type="text" id="nt-bn" placeholder="যেমন: শীতের মাঠ" /></div>
+          <div><label>নাম (English)</label><input type="text" id="nt-en" placeholder="Winter Field" /></div>
+        </div>
+        <div class="row">
+          <div><label>ঘাসের রং ১</label><input type="color" id="nt-ga" value="#4da842" /></div>
+          <div><label>ঘাসের রং ২</label><input type="color" id="nt-gb" value="#57b34a" /></div>
+          <div><label>আকাশের রং</label><input type="color" id="nt-sky" value="#aee3f5" /></div>
+        </div>
+        <div class="row">
+          <div><label>দাম (কয়েন)</label><input type="number" id="nt-price" min="0" max="1000" value="100" /></div>
+          <div><label>&nbsp;</label><button class="btn-gold" id="addThemeBtn" style="width:100%">যোগ করো</button></div>
+        </div>
+      </div>
+
+      <div class="card tabpage" id="tab-features">
+        <label><input type="checkbox" id="feat-sound" style="width:20px;height:20px" /> 🔊 সাউন্ড চালু (সবার জন্য)</label>
+        <label><input type="checkbox" id="feat-voice" style="width:20px;height:20px" /> 🗣️ মজার ভয়েস চালু (সবার জন্য)</label>
+        <label><input type="checkbox" id="feat-daily" style="width:20px;height:20px" /> 🎁 ডেইলি রিওয়ার্ড চালু (সবার জন্য)</label>
+        <p class="hint">বন্ধ করলে সব ভিজিটরের জন্য ওই ফিচার বন্ধ হয়ে যাবে। খেলোয়াড় নিজের ফোনে আলাদাভাবে সাউন্ড/ভয়েস বন্ধ করতে পারে।</p>
+        <h3 style="margin:18px 0 4px">🔑 পাসওয়ার্ড বদলাও</h3>
+        <label>নতুন পাসওয়ার্ড (খালি রাখলে বদলাবে না)</label>
+        <input type="password" id="newPass" autocomplete="new-password" />
+      </div>
+
+      <div class="card tabpage" id="tab-stats">
+        <div class="stat-grid" id="statsSummary"></div>
+        <h3 style="margin:16px 0 4px">🕐 সাম্প্রতিক ম্যাচ</h3>
+        <div id="statsRecent"><p class="hint">লোড হচ্ছে…</p></div>
+        <p class="hint">পরিসংখ্যান শুধু তখনই আসে যখন Supabase যুক্ত থাকে। Local mode-এ পরিসংখ্যান দেখা যায় না।</p>
+      </div>
+
+      <div id="saveBar">
+        <button class="btn-green" id="saveBtn" style="flex:0 0 150px">💾 সেভ করো</button>
+        <div class="status" id="saveStatus"></div>
+        <button class="btn-ghost" id="logoutBtn">লগআউট</button>
+      </div>
+    </div>
+
+    <div class="backlink"><a href="index.html">← খেলাঘরে ফিরে যাও</a></div>
+  </main>
+  <script src="config.js"></script>
+  <script src="settings-loader.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
