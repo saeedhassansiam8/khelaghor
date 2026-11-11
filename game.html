@@ -286,6 +286,13 @@
       .shop-item .buy.equip { background: var(--green); color: #fff; border-bottom-color: var(--green-dark); }
       .shop-item .buy.equipped { background: var(--card); color: var(--green-dark); border: 2px solid var(--green); border-bottom: 2px solid var(--green); }
       @media (prefers-color-scheme: dark) { .shop-item .buy.equipped { color: var(--gold); border-color: var(--gold); } }
+      /* owned-count green badge: owned items obvious at a glance */
+      .owned-badge { display: inline-block; background: #1e9e4a; color: #fff; font-size: 11.5px; font-weight: 800; line-height: 1.4; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; white-space: nowrap; }
+      /* buy celebration: quick card pulse + coin burst (~0.5s, non-blocking) */
+      @keyframes boughtPulse { 0% { box-shadow: 0 0 0 0 rgba(30,158,74,.55); transform: scale(1); } 40% { box-shadow: 0 0 0 8px rgba(30,158,74,.18); transform: scale(1.02); } 100% { box-shadow: 0 0 0 0 rgba(30,158,74,0); transform: scale(1); } }
+      .shop-item.just-bought { animation: boughtPulse .5s ease; border-color: #1e9e4a; }
+      .buy-burst { position: fixed; z-index: 60; pointer-events: none; font-size: 18px; line-height: 1; animation: coinBurst .55s ease-out forwards; }
+      @keyframes coinBurst { 0% { opacity: 1; transform: translate(-50%,-50%) scale(.6) rotate(0deg); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx,0px)), calc(-50% - 46px)) scale(1.15) rotate(var(--rot,20deg)); } }
       .shop-balance { font-family: "Baloo Da 2", sans-serif; font-weight: 800; font-size: 20px; }
       @keyframes cardIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
       .overlay .card { animation: cardIn .18s ease; }
@@ -1127,6 +1134,35 @@ function closeShop() {
   el("shopOverlay").hidden = true;
   refreshHud(); refreshMenuStats();
 }
+function ownedBadge(n) {
+  var t = T[S.lang];
+  if (n > 0) return '<span class="owned-badge">✓ ' + t.owned(n) + '</span>';
+  return t.owned(n);
+}
+function playBuyFx(key, rect) {
+  var card = document.querySelector('.shop-item[data-item="' + key + '"]');
+  if (card) {
+    card.classList.remove("just-bought"); void card.offsetWidth; card.classList.add("just-bought");
+    setTimeout(function() { card.classList.remove("just-bought"); }, 600);
+  }
+  if (!rect) return;
+  var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+  var offs = [-34, -17, 0, 17, 34];
+  for (var i = 0; i < offs.length; i++) {
+    (function(dx, k) {
+      var s = document.createElement("span");
+      s.className = "buy-burst";
+      s.textContent = "🪙";
+      s.style.left = cx + "px";
+      s.style.top = cy + "px";
+      s.style.setProperty("--dx", dx + "px");
+      s.style.setProperty("--rot", (k % 2 ? 24 : -24) + "deg");
+      s.style.animationDelay = (k * 0.03) + "s";
+      document.body.appendChild(s);
+      setTimeout(function() { if (s.parentNode) s.parentNode.removeChild(s); }, 800);
+    })(offs[i], i);
+  }
+}
 function renderShop() {
   var t = T[S.lang], bn = S.lang === "bn";
   el("shopCoins").textContent = num(SAVE.coins);
@@ -1139,7 +1175,7 @@ function renderShop() {
     if (on) btn = '<button class="buy equipped" disabled>' + t.equipped + "</button>";
     else if (owned) btn = '<button class="buy equip" data-act="equip-skin" data-id="' + sk.id + '">' + t.equip + "</button>";
     else btn = '<button class="buy" data-act="buy-skin" data-id="' + sk.id + '"' + (SAVE.coins < sk.price ? " disabled" : "") + ">" + t.buy(sk.price) + "</button>";
-    h += '<div class="shop-item"><div class="sw" style="background:' + sk.color + '">👕</div><div class="info"><div class="nm">' + (bn ? sk.bn : sk.en) + '</div><div class="ds">' + (bn ? sk.dsBn : sk.dsEn) + "</div></div>" + btn + "</div>";
+    h += '<div class="shop-item" data-item="skin-' + sk.id + '"><div class="sw" style="background:' + sk.color + '">👕</div><div class="info"><div class="nm">' + (bn ? sk.bn : sk.en) + (owned && !on ? ' <span class="owned-badge">' + t.ownedTag + '</span>' : '') + '</div><div class="ds">' + (bn ? sk.dsBn : sk.dsEn) + "</div></div>" + btn + "</div>";
   });
   h += '<div class="shop-sec">' + t.secThemes + "</div>";
   THEMES.forEach(function(th) {
@@ -1149,50 +1185,52 @@ function renderShop() {
     if (on) btn = '<button class="buy equipped" disabled>' + t.themeOn + "</button>";
     else if (owned) btn = '<button class="buy equip" data-act="use-theme" data-id="' + th.id + '">' + t.useTheme + "</button>";
     else btn = '<button class="buy" data-act="buy-theme" data-id="' + th.id + '"' + (SAVE.coins < th.price ? " disabled" : "") + ">" + t.buy(th.price) + "</button>";
-    h += '<div class="shop-item"><div class="sw" style="background:linear-gradient(180deg,' + th.sky + ' 45%,' + th.gA + ' 45%)">🌾</div><div class="info"><div class="nm">' + (bn ? th.bn : th.en) + '</div><div class="ds">' + (bn ? th.dsBn : th.dsEn) + "</div></div>" + btn + "</div>";
+    h += '<div class="shop-item" data-item="theme-' + th.id + '"><div class="sw" style="background:linear-gradient(180deg,' + th.sky + ' 45%,' + th.gA + ' 45%)">🌾</div><div class="info"><div class="nm">' + (bn ? th.bn : th.en) + (owned && !on ? ' <span class="owned-badge">' + t.ownedTag + '</span>' : '') + '</div><div class="ds">' + (bn ? th.dsBn : th.dsEn) + "</div></div>" + btn + "</div>";
   });
   h += '<div class="shop-sec">' + t.secPower + "</div>";
-  h += '<div class="shop-item"><div class="sw" style="background:#ffe9a8">⚡</div><div class="info"><div class="nm">' + t.boostName + (S.matchBoost ? " · " + t.boostOn : "") + '</div><div class="ds">' + t.boostDs + " · " + t.owned(SAVE.speedBoosts) + '</div></div><button class="buy" data-act="buy-boost"' + (SAVE.coins < powerPrice("boost", 30) ? " disabled" : "") + ">" + t.buy(powerPrice("boost", 30)) + "</button></div>";
-  h += '<div class="shop-item"><div class="sw" style="background:#ffd3d3">❤️</div><div class="info"><div class="nm">' + t.lifeName + '</div><div class="ds">' + t.lifeDs + " · " + t.owned(SAVE.extraLives) + '</div></div><button class="buy" data-act="buy-life"' + (SAVE.coins < powerPrice("life", 40) ? " disabled" : "") + ">" + t.buy(powerPrice("life", 40)) + "</button></div>";
-  if (SAVE.dashPro) h += '<div class="shop-item"><div class="sw" style="background:#d8f3dc">💨</div><div class="info"><div class="nm">' + t.dashUpName + '</div><div class="ds">' + t.dashUpDs + '</div></div><button class="buy equipped" disabled>' + t.ownedTag + "</button></div>";
-  else h += '<div class="shop-item"><div class="sw" style="background:#d8f3dc">💨</div><div class="info"><div class="nm">' + t.dashUpName + '</div><div class="ds">' + t.dashUpDs + '</div></div><button class="buy" data-act="buy-dash"' + (SAVE.coins < powerPrice("dash", 150) ? " disabled" : "") + ">" + t.buy(powerPrice("dash", 150)) + "</button></div>";
-  if (SAVE.turboBoots) h += '<div class="shop-item"><div class="sw" style="background:#ffe9a8">👟</div><div class="info"><div class="nm">' + t.turboName + '</div><div class="ds">' + t.turboDs + '</div></div><button class="buy equipped" disabled>' + t.ownedTag + "</button></div>";
-  else h += '<div class="shop-item"><div class="sw" style="background:#ffe9a8">👟</div><div class="info"><div class="nm">' + t.turboName + '</div><div class="ds">' + t.turboDs + '</div></div><button class="buy" data-act="buy-turbo"' + (SAVE.coins < powerPrice("turbo", 200) ? " disabled" : "") + ">" + t.buy(powerPrice("turbo", 200)) + "</button></div>";
+  h += '<div class="shop-item" data-item="boost"><div class="sw" style="background:#ffe9a8">⚡</div><div class="info"><div class="nm">' + t.boostName + (S.matchBoost ? " · " + t.boostOn : "") + '</div><div class="ds">' + t.boostDs + " · " + ownedBadge(SAVE.speedBoosts) + '</div></div><button class="buy" data-act="buy-boost"' + (SAVE.coins < powerPrice("boost", 30) ? " disabled" : "") + ">" + t.buy(powerPrice("boost", 30)) + "</button></div>";
+  h += '<div class="shop-item" data-item="life"><div class="sw" style="background:#ffd3d3">❤️</div><div class="info"><div class="nm">' + t.lifeName + '</div><div class="ds">' + t.lifeDs + " · " + ownedBadge(SAVE.extraLives) + '</div></div><button class="buy" data-act="buy-life"' + (SAVE.coins < powerPrice("life", 40) ? " disabled" : "") + ">" + t.buy(powerPrice("life", 40)) + "</button></div>";
+  if (SAVE.dashPro) h += '<div class="shop-item" data-item="dash"><div class="sw" style="background:#d8f3dc">💨</div><div class="info"><div class="nm">' + t.dashUpName + '</div><div class="ds">' + t.dashUpDs + '</div></div><button class="buy equipped" disabled>' + t.ownedTag + "</button></div>";
+  else h += '<div class="shop-item" data-item="dash"><div class="sw" style="background:#d8f3dc">💨</div><div class="info"><div class="nm">' + t.dashUpName + '</div><div class="ds">' + t.dashUpDs + '</div></div><button class="buy" data-act="buy-dash"' + (SAVE.coins < powerPrice("dash", 150) ? " disabled" : "") + ">" + t.buy(powerPrice("dash", 150)) + "</button></div>";
+  if (SAVE.turboBoots) h += '<div class="shop-item" data-item="turbo"><div class="sw" style="background:#ffe9a8">👟</div><div class="info"><div class="nm">' + t.turboName + '</div><div class="ds">' + t.turboDs + '</div></div><button class="buy equipped" disabled>' + t.ownedTag + "</button></div>";
+  else h += '<div class="shop-item" data-item="turbo"><div class="sw" style="background:#ffe9a8">👟</div><div class="info"><div class="nm">' + t.turboName + '</div><div class="ds">' + t.turboDs + '</div></div><button class="buy" data-act="buy-turbo"' + (SAVE.coins < powerPrice("turbo", 200) ? " disabled" : "") + ">" + t.buy(powerPrice("turbo", 200)) + "</button></div>";
   el("shopList").innerHTML = h;
 }
 el("shopList").addEventListener("click", function(e) {
   var b = e.target.closest ? e.target.closest("button[data-act]") : null;
   if (!b || b.disabled) return;
   var act = b.getAttribute("data-act"), id = b.getAttribute("data-id"), t = T[S.lang];
+  var rect = b.getBoundingClientRect(), boughtKey = null;
   ensureAudio();
   if (act === "buy-skin") {
     var sk = skinById(id);
     if (SAVE.coins < sk.price) { sndDeny(); return; }
     SAVE.coins -= sk.price; SAVE.ownedSkins.push(sk.id); SAVE.skin = sk.id;
-    persist(); sndCoin(); addPopupCenter(t.bought);
+    persist(); sndCoin(); addPopupCenter(t.bought); boughtKey = "skin-" + sk.id;
   } else if (act === "equip-skin") { SAVE.skin = id; persist(); sndClick(); }
   else if (act === "buy-theme") {
     var th = themeById(id);
     if (SAVE.coins < th.price) { sndDeny(); return; }
     SAVE.coins -= th.price; SAVE.ownedThemes.push(th.id); SAVE.theme = th.id;
-    persist(); buildField(); sndCoin(); addPopupCenter(t.bought);
+    persist(); buildField(); sndCoin(); addPopupCenter(t.bought); boughtKey = "theme-" + th.id;
   } else if (act === "use-theme") { SAVE.theme = id; persist(); buildField(); sndClick(); }
   else if (act === "buy-boost") {
     if (SAVE.coins < powerPrice("boost", 30)) { sndDeny(); return; }
-    SAVE.coins -= powerPrice("boost", 30); SAVE.speedBoosts++; persist(); sndCoin();
+    SAVE.coins -= powerPrice("boost", 30); SAVE.speedBoosts++; persist(); sndCoin(); boughtKey = "boost";
   } else if (act === "buy-life") {
     if (SAVE.coins < powerPrice("life", 40)) { sndDeny(); return; }
-    SAVE.coins -= powerPrice("life", 40); SAVE.extraLives++; persist(); sndCoin(); refreshLifeTag();
+    SAVE.coins -= powerPrice("life", 40); SAVE.extraLives++; persist(); sndCoin(); refreshLifeTag(); boughtKey = "life";
   }
   else if (act === "buy-dash") {
     if (SAVE.coins < powerPrice("dash", 150)) { sndDeny(); return; }
-    SAVE.coins -= powerPrice("dash", 150); SAVE.dashPro = true; persist(); sndCoin(); addPopupCenter(t.bought);
+    SAVE.coins -= powerPrice("dash", 150); SAVE.dashPro = true; persist(); sndCoin(); addPopupCenter(t.bought); boughtKey = "dash";
   }
   else if (act === "buy-turbo") {
     if (SAVE.coins < powerPrice("turbo", 200)) { sndDeny(); return; }
-    SAVE.coins -= powerPrice("turbo", 200); SAVE.turboBoots = true; persist(); sndCoin(); addPopupCenter(t.bought);
+    SAVE.coins -= powerPrice("turbo", 200); SAVE.turboBoots = true; persist(); sndCoin(); addPopupCenter(t.bought); boughtKey = "turbo";
   }
   renderShop(); refreshHud(); refreshMenuStats();
+  if (boughtKey) playBuyFx(boughtKey, rect);
 });
 function addPopupCenter(text) { addPopup(VW / 2, VH / 2 - 60, text, "#ffffff"); }
 
