@@ -45,7 +45,7 @@
         overscroll-behavior: none;
       }
       button { touch-action: manipulation; }
-      #app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+      #app { position: fixed; top: 0; left: 0; right: 0; height: 100vh; height: 100svh; display: flex; flex-direction: column; }
       /* ---------- top bar ---------- */
       #topbar {
         position: relative; z-index: 5;
@@ -337,6 +337,7 @@
                 <button data-char="brave"><span class="dname">🦸 বীর</span><small class="dsub">লুকিয়ে মিটার ৫০% দ্রুত কমে</small></button>
                 <button data-char="storm"><span class="dname">🌪️ ঝড়</span><small class="dsub">২০% দ্রুত · ধরা পড়া ১৫% দ্রুত</small></button>
                 <button data-char="shadow"><span class="dname">🌑 ছায়া</span><small class="dsub">ধরা পড়া ৩০% ধীর</small></button>
+                <button data-char="dourchhaya"><span class="dname">🥷 দৌড়ছায়া</span><small class="dsub">১২% দ্রুত · ধরা পড়া ৩০% ধীর</small></button>
                 <button data-char="patient"><span class="dname">🧘 ধৈর্য</span><small class="dsub">লুকিয়ে মিটার ২ গুণ দ্রুত কমে</small></button>
               </div>
             </div>
@@ -522,8 +523,8 @@ var T = {
     spotNames: { hay: "খড়ের গাদা", tree: "বড় গাছ", house1: "বাড়ির পেছনে", cart: "গরুর গাড়ি", bush: "ঝোপ", pond: "পুকুর পাড়", house2: "ছোট ঘর", banana: "কলাগাছ", paddy: "ধানক্ষেত", cowshed: "গোয়ালঘর", bamboo: "বাঁশঝাড়" },
     defaultName: "খেলোয়াড়",
     playerNameLabel: "তোমার নাম", charLabel: "চরিত্র বেছে নাও", achLabel: "অ্যাচিভমেন্ট",
-    charNames: { roni: "🏃 রনি", dour: "⚡ দৌড়বাজ", chup: "🤫 চুপচাপ", lucky: "🍀 ভাগ্যবান", brave: "🦸 বীর", storm: "🌪️ ঝড়", shadow: "🌑 ছায়া", patient: "🧘 ধৈর্য" },
-    charSubs: { roni: "সব দিক সমান", dour: "১২% দ্রুত", chup: "ধরা পড়া ২০% ধীর", lucky: "পাওয়ার-আপ ৫০% বেশি সময়", brave: "লুকিয়ে মিটার ৫০% দ্রুত কমে", storm: "২০% দ্রুত · ধরা পড়া ১৫% দ্রুত", shadow: "ধরা পড়া ৩০% ধীর", patient: "লুকিয়ে মিটার ২ গুণ দ্রুত কমে" },
+    charNames: { roni: "🏃 রনি", dour: "⚡ দৌড়বাজ", chup: "🤫 চুপচাপ", lucky: "🍀 ভাগ্যবান", brave: "🦸 বীর", storm: "🌪️ ঝড়", shadow: "🌑 ছায়া", dourchhaya: "🥷 দৌড়ছায়া", patient: "🧘 ধৈর্য" },
+    charSubs: { roni: "সব দিক সমান", dour: "১২% দ্রুত", chup: "ধরা পড়া ২০% ধীর", lucky: "পাওয়ার-আপ ৫০% বেশি সময়", brave: "লুকিয়ে মিটার ৫০% দ্রুত কমে", storm: "২০% দ্রুত · ধরা পড়া ১৫% দ্রুত", shadow: "ধরা পড়া ৩০% ধীর", dourchhaya: "১২% দ্রুত · ধরা পড়া ৩০% ধীর", patient: "লুকিয়ে মিটার ২ গুণ দ্রুত কমে" },
     fxNames: { ghost: "👻 অদৃশ্য", speed: "⚡ দ্রুত", silent: "🔇 নীরব", coin: "🪙 কয়েন", life: "❤️ জীবন", gold: "🌟 সোনালি কয়েন" },
     puBanner: { ghost: "👻 অদৃশ্য! খোঁজারু তোমাকে দেখতে পাবে না", speed: "⚡ দ্রুত! ৬ সেকেন্ড দৌড়াও", silent: "🔇 নীরব! ধরা পড়া ধীর হয়ে গেল", coin: "🪙 +১০ কয়েন!", life: "❤️ +১ জীবন!", gold: "🌟 সোনালি কয়েন! +২৫ কয়েন!" },
     streakLine: function(s){ return s > 0 ? "🔥 সেরা পারফেক্ট স্ট্রিক: " + num(s) + " রাউন্ড" : "🔥 পারফেক্ট স্ট্রিক: এখনো নেই — পরপর পারফেক্ট রাউন্ড জেতো!"; },
@@ -604,8 +605,8 @@ var T = {
     spotNames: { hay: "Haystack", tree: "Big Tree", house1: "Behind House", cart: "Bullock Cart", bush: "Bush", pond: "Pond Edge", house2: "Small Hut", banana: "Banana Tree", paddy: "Paddy Field", cowshed: "Cowshed", bamboo: "Bamboo Grove" },
     defaultName: "Player",
     playerNameLabel: "Your name", charLabel: "Choose your character", achLabel: "Achievements",
-    charNames: { roni: "🏃 Roni", dour: "⚡ Speedy", chup: "🤫 Quiet", lucky: "🍀 Lucky", brave: "🦸 Brave", storm: "🌪️ Storm", shadow: "🌑 Shadow", patient: "🧘 Patient" },
-    charSubs: { roni: "Balanced", dour: "12% faster", chup: "Spotted 20% slower", lucky: "Power-ups last 50% longer", brave: "Spotted meter drains 50% faster", storm: "20% faster · spotted 15% faster", shadow: "Spotted 30% slower", patient: "Spotted meter drains 2× faster" },
+    charNames: { roni: "🏃 Roni", dour: "⚡ Speedy", chup: "🤫 Quiet", lucky: "🍀 Lucky", brave: "🦸 Brave", storm: "🌪️ Storm", shadow: "🌑 Shadow", dourchhaya: "🥷 Dourchhaya", patient: "🧘 Patient" },
+    charSubs: { roni: "Balanced", dour: "12% faster", chup: "Spotted 20% slower", lucky: "Power-ups last 50% longer", brave: "Spotted meter drains 50% faster", storm: "20% faster · spotted 15% faster", shadow: "Spotted 30% slower", dourchhaya: "12% faster · spotted 30% slower", patient: "Spotted meter drains 2× faster" },
     fxNames: { ghost: "👻 Ghost", speed: "⚡ Speed", silent: "🔇 Silent", coin: "🪙 Coin", life: "❤️ Life", gold: "🌟 Golden Coin" },
     puBanner: { ghost: "👻 Ghost! The seeker can't see you", speed: "⚡ Speed! Run fast for 6 seconds", silent: "🔇 Silent! Spotted meter rises slower", coin: "🪙 +10 coins!", life: "❤️ +1 life!", gold: "🌟 Golden coin! +25 coins!" },
     streakLine: function(s){ return s > 0 ? "🔥 Best perfect streak: " + s + " rounds" : "🔥 Perfect streak: none yet — win perfect rounds in a row!"; },
@@ -667,6 +668,8 @@ var CHARS = {
   brave: { color: "#c62828", emoji: "🦸", spd: 1,   stealth: 1 },
   storm: { color: "#00838f", emoji: "🌪️", spd: 1.2,  stealth: 1.15 },
   shadow: { color: "#455a64", emoji: "🌑", spd: 0.95, stealth: 0.7 },
+  /* combo: দৌড়বাজের গতি + ছায়ার লুকানো */
+  dourchhaya: { color: "#263238", emoji: "🥷", spd: 1.12, stealth: 0.7 },
   patient: { color: "#6d4c41", emoji: "🧘", spd: 0.9,  stealth: 1 }
 };
 var ACH = [
@@ -1149,14 +1152,21 @@ function updatePlayer(dt, who) {
   var mx = 0, my = 0, mag = 0;
   if (joy.active && joy.mag > 0) { mx = joy.dx * joy.mag; my = joy.dy * joy.mag; mag = joy.mag; }
   else if (kx || ky) { var kl = Math.hypot(kx, ky); mx = kx / kl; my = ky / kl; mag = 1; }
-  p.moving = mag > 0.05;
+  /* smooth controls: velocity ramps toward the target instead of snapping,
+     so starts, stops and turns glide instead of jerking */
+  var spd = PLAYER_SPEED * (CHARS[S.char] || CHARS.roni).spd * (S.fx.speed > 0 ? 1.5 : 1);
+  var tx = mx * spd * mag, ty = my * spd * mag;
+  var rate = mag > 0.05 ? 12 : 16; /* accelerate 12/s, brake 16/s */
+  var k = 1 - Math.exp(-rate * dt);
+  p.vx += (tx - p.vx) * k;
+  p.vy += (ty - p.vy) * k;
+  p.moving = Math.hypot(p.vx, p.vy) > 8;
   if (p.moving) {
-    var spd = PLAYER_SPEED * (CHARS[S.char] || CHARS.roni).spd * (S.fx.speed > 0 ? 1.5 : 1);
-    var nx = p.x + mx * spd * mag * dt;
-    var ny = p.y + my * spd * mag * dt;
+    var nx = p.x + p.vx * dt;
+    var ny = p.y + p.vy * dt;
     var c = collide(nx, ny, 13);
     p.x = c.x; p.y = c.y;
-    p.face = Math.atan2(my, mx);
+    if (Math.hypot(p.vx, p.vy) > 12) p.face = Math.atan2(p.vy, p.vx);
     S.bob += dt;
   }
   collectPowerups();
@@ -1579,7 +1589,7 @@ function startMatch() {
   setupRound();
 }
 function setupRound() {
-  S.player.x = 210; S.player.y = 560; S.player.face = -Math.PI / 2; S.player.moving = false;
+  S.player.x = 210; S.player.y = 560; S.player.face = -Math.PI / 2; S.player.moving = false; S.player.vx = 0; S.player.vy = 0;
   S.seeker = { x: COUNT_SPOT.x, y: COUNT_SPOT.y, face: -Math.PI / 2, wp: 0, wait: 0, checking: null, checkT: 0, scanA: 0 };
   S.spotted = 0; S.maxSpotted = 0; S.chase = false; S.chaseLost = 0; S.closeCalled = false;
   S.checkTimer = diffCfg().checkEvery;
