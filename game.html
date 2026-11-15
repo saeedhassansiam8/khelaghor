@@ -184,6 +184,23 @@
       }
       #dodgeBtn:disabled { filter: grayscale(0.7); opacity: 0.55; }
       #dashBtn { margin-left: 10px !important; }
+      #ghostBtn, #freezeBtn {
+        width: 56px; height: 56px; border-radius: 50%;
+        font-size: 13px; line-height: 1.15;
+      }
+      #ghostBtn { background: #7b4bb5; border-bottom: 6px solid #5a3390; }
+      #freezeBtn { background: #35b6d9; border-bottom: 6px solid #238aa8; }
+      #ghostBtn:disabled, #freezeBtn:disabled { filter: grayscale(0.7); opacity: 0.55; }
+      #powerRow {
+        position: absolute; left: 0; right: 0;
+        bottom: calc(112px + env(safe-area-inset-bottom));
+        z-index: 6; display: flex; justify-content: flex-end;
+        pointer-events: none; padding: 0 16px; gap: 8px;
+      }
+      #shopCloseBtn { position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -8px 16px rgba(0,0,0,0.15); }
+      .ach-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 6px 0 2px; }
+      .ach-chip { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: rgba(0,0,0,0.06); color: var(--ink-soft); }
+      .ach-chip.on { background: #fff3c4; color: #7a5b00; border: 1px solid #e8a812; font-weight: 700; }
       /* ---------- GOAL celebration ---------- */
       #goalFx {
         position: absolute; left: 50%; top: 26%; z-index: 9;
@@ -348,6 +365,10 @@
           <button class="big-btn" id="dodgeBtn" hidden>🌀<br /><span id="dodgeLabel">কাটাকাটি</span></button>
           <button class="big-btn" id="dashBtn" hidden>⚡<br /><span id="dashLabel">ঝাঁপ</span></button>
         </div>
+        <div id="powerRow">
+          <button class="big-btn" id="ghostBtn" hidden>👻<br /><span id="ghostLabel">ভূত</span></button>
+          <button class="big-btn" id="freezeBtn" hidden>❄️<br /><span id="freezeLabel">বরফ</span></button>
+        </div>
 
         <!-- MENU -->
         <div class="overlay" id="menuOverlay">
@@ -360,6 +381,8 @@
               <div class="stat-box"><div class="n" id="statWinsLabel">ম্যাচ জয়</div><div class="v" id="menuWins">০</div></div>
               <div class="stat-box"><div class="n" id="statStreakLabel">সেরা স্ট্রিক</div><div class="v">🔥 <span id="menuStreak">০</span></div></div>
             </div>
+            <div class="seg-label" id="achLabel">অ্যাচিভমেন্ট</div>
+            <div class="ach-row" id="achRow"></div>
             <div class="btn-col">
               <button class="cta orange" id="dailyBtn" hidden style="min-width:0; font-size:17px; padding:10px 22px;">🎁 আজকের পুরস্কার</button>
             </div>
@@ -440,7 +463,8 @@ var SAVE = {
   skin: "classic", ownedSkins: ["classic"],
   theme: "village", ownedThemes: ["village"],
   speedBoosts: 0, extraLives: 0,
-  bestStreak: 0, lastDaily: "", dashPro: false, turboBoots: false
+  bestStreak: 0, lastDaily: "", dashPro: false, turboBoots: false,
+  ach: [], winStreak: 0, ghosts: 0, freezes: 0
 };
 try {
   var raw = localStorage.getItem(SAVE_KEY);
@@ -458,7 +482,10 @@ var SKINS = [
   { id: "gold",    color: "#e8a812", price: 250, bn: "সোনালি জার্সি",  en: "Golden Jersey",  dsBn: "চ্যাম্পিয়নদের সোনালি", dsEn: "Champion gold" },
   { id: "sky",     color: "#35b6d9", price: 150, bn: "আকাশি জার্সি",   en: "Sky Jersey",     dsBn: "খোলা আকাশের মতো হালকা নীল", dsEn: "Light as the open sky" },
   { id: "rose",    color: "#e5639a", price: 170, bn: "গোলাপি জার্সি",  en: "Pink Jersey",    dsBn: "গোলাপের মতো ঝলমলে", dsEn: "Bright as a rose" },
-  { id: "midnight", color: "#2e3a47", price: 230, bn: "মিডনাইট জার্সি", en: "Midnight Jersey", dsBn: "গভীর রাতের স্টাইল", dsEn: "Deep midnight style" }
+  { id: "midnight", color: "#2e3a47", price: 230, bn: "মিডনাইট জার্সি", en: "Midnight Jersey", dsBn: "গভীর রাতের স্টাইল", dsEn: "Deep midnight style" },
+  { id: "emerald", color: "#0f9d6e", price: 200, bn: "পান্না জার্সি", en: "Emerald Jersey", dsBn: "গভীর সবুজ পান্না", dsEn: "Deep emerald green" },
+  { id: "violet",  color: "#8e44ad", price: 210, bn: "বেগুনি জার্সি", en: "Violet Jersey", dsBn: "উজ্জ্বল বেগুনি", dsEn: "Bright violet" },
+  { id: "fire",    color: "#e4572e", price: 280, bn: "আগুনের জার্সি", en: "Fire Jersey", dsBn: "আগুনের মতো লাল-কমলা", dsEn: "Fiery red-orange" }
 ];
 var THEMES = [
   { id: "village", price: 0,   bn: "গ্রামের মাঠ",   en: "Village Field",  gA: "#4da842", gB: "#57b34a", sky: "#aee3f5", dsBn: "সবুজ গ্রামের মাঠ", dsEn: "The green village field" },
@@ -466,7 +493,9 @@ var THEMES = [
   { id: "monsoon", price: 140, bn: "বর্ষার মাঠ",    en: "Monsoon Field",  gA: "#3e8f4e", gB: "#479e58", sky: "#9fc6d8", dsBn: "বৃষ্টিভেজা সবুজ", dsEn: "Rain-washed green" },
   { id: "night",   price: 200, bn: "রাতের স্টেডিয়াম", en: "Night Stadium", gA: "#256b33", gB: "#2c783c", sky: "#26354f", dsBn: "ফ্লাডলাইটের রাত", dsEn: "Floodlit night match" },
   { id: "sand",    price: 120, bn: "বালুর মাঠ",    en: "Sandy Field",    gA: "#cfa960", gB: "#d8b96c", sky: "#ffe3ae", dsBn: "নদীর পাড়ের বালুর মাঠ", dsEn: "Riverside sand pitch" },
-  { id: "autumn",  price: 170, bn: "শরতের মাঠ",    en: "Autumn Field",   gA: "#7f9c38", gB: "#8cab42", sky: "#ffcf99", dsBn: "শরতের সোনালি ঘাস", dsEn: "Golden autumn grass" }
+  { id: "autumn",  price: 170, bn: "শরতের মাঠ",    en: "Autumn Field",   gA: "#7f9c38", gB: "#8cab42", sky: "#ffcf99", dsBn: "শরতের সোনালি ঘাস", dsEn: "Golden autumn grass" },
+  { id: "winter",  price: 180, bn: "শীতের মাঠ",    en: "Winter Field",   gA: "#7fae8a", gB: "#8cb896", sky: "#cfe8f5", dsBn: "কুয়াশা-ভেজা শীতের সকাল", dsEn: "Foggy winter morning" },
+  { id: "forest",  price: 160, bn: "বনের মাঠ",     en: "Forest Field",   gA: "#2f7d32", gB: "#388e3c", sky: "#b7e4c7", dsBn: "গভীর বনের সবুজ", dsEn: "Deep forest green" }
 ];
 function skinById(id) { for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return SKINS[i]; return SKINS[0]; }
 function themeById(id) { for (var i = 0; i < THEMES.length; i++) if (THEMES[i].id === id) return THEMES[i]; return THEMES[0]; }
@@ -534,6 +563,15 @@ var T = {
     dailyBtn: function(c){ return "🎁 আজকের পুরস্কার নাও · 🪙 " + num(c); },
     dashUpName: "ড্যাশ আপগ্রেড", dashUpDs: "ঝাঁপ আরও লম্বা + দ্রুত রিচার্জ — চিরদিনের জন্য",
     turboName: "টার্বো বুট", turboDs: "রানার চিরদিন ৬% বেশি দ্রুত দৌড়াবে",
+    ghostName: "ভূত", ghostDs: "৩ সেকেন্ড অদৃশ্য থাকো — ট্যাগাররা ধরতে পারবে না",
+    freezeName: "বরফ", freezeDs: "সব ট্যাগার ২ সেকেন্ড জমে যাবে",
+    ghostLabel: "ভূত", freezeLabel: "বরফ",
+    comboTag: "🔥 কম্বো ×২!",
+    achLabel: "অ্যাচিভমেন্ট", achUnlock: "🏆 অ্যাচিভমেন্ট!",
+    goldBall: "🌟 সোনালি বল! +১৫ কয়েন!",
+    winStreakText: function(n){ return "🔥 জয়ের ধারাবাহিকতা: " + num(n) + " ম্যাচ"; },
+    streakBonusText: "🔥 ৩ ম্যাচ জয়ের ধারাবাহিকতা! +৫০ কয়েন বোনাস!",
+    achNames: { first_goal: "প্রথম গোল", hat_trick: "হ্যাটট্রিক", perfect3: "পারফেক্ট ৩", captain_goal: "গোডার গোল", first_win: "প্রথম জয়", tag_master: "ট্যাগ মাস্টার" },
     ownedTag: "✓ কেনা আছে",
     youTag: "তুমি",
     rules: [
@@ -598,6 +636,15 @@ var T = {
     dailyBtn: function(c){ return "🎁 Claim today's reward · 🪙 " + c; },
     dashUpName: "Dash Upgrade", dashUpDs: "Longer dash + faster recharge — forever",
     turboName: "Turbo Boots", turboDs: "Your runner is 6% faster — forever",
+    ghostName: "Ghost", ghostDs: "Invisible for 3s — taggers can't tag you",
+    freezeName: "Freeze", freezeDs: "All taggers freeze for 2s",
+    ghostLabel: "Ghost", freezeLabel: "Freeze",
+    comboTag: "🔥 COMBO ×2!",
+    achLabel: "Achievements", achUnlock: "🏆 Achievement!",
+    goldBall: "🌟 Golden ball! +15 coins!",
+    winStreakText: function(n){ return "🔥 Win streak: " + n + " matches"; },
+    streakBonusText: "🔥 3-win streak! +50 coins bonus!",
+    achNames: { first_goal: "First Goal", hat_trick: "Hat-trick", perfect3: "Perfect 3", captain_goal: "Goda's Goal", first_win: "First Win", tag_master: "Tag Master" },
     ownedTag: "✓ Owned",
     youTag: "YOU",
     rules: [
@@ -615,7 +662,7 @@ var NAMES = {
 };
 
 /* ================= state ================= */
-var MATCH_LEN = 120; // seconds per match — the countdown clock (admin can change it; see matchLen())
+var MATCH_LEN = 180; // seconds per match — the countdown clock (admin can change it; see matchLen())
 var DAILY_COINS = 50;
 /* ================= Khelaghor remote settings (admin-controlled) =================
    Values below read window.KHELAGHOR_SETTINGS (fetched from Supabase by
@@ -627,7 +674,7 @@ function KHnum(path, fb) {
   for (var i = 0; i < parts.length; i++) { if (v == null) return fb; v = v[parts[i]]; }
   var n = Number(v); return isFinite(n) ? n : fb;
 }
-function matchLen()    { return Math.max(30, Math.min(600, KHnum("matchLen", 120))); }
+function matchLen()    { return Math.max(30, Math.min(600, KHnum("matchLen", 180))); }
 function dailyCoins()  { return Math.max(0, Math.min(1000, KHnum("coins.daily", 50))); }
 function coinGoalCap() { return Math.max(0, KHnum("coins.goalCaptain", 20)); }
 function coinGoal()    { return Math.max(0, KHnum("coins.goal", 10)); }
@@ -657,11 +704,11 @@ var S = {
   chainAngle: -Math.PI / 2, chainSpeed: 1.15,
   breakTimer: 0, bannerTimer: 0, afterBanner: null,
   runner: null, taggers: [], helpers: [],
-  dashCd: 0, dashTime: 0, dodgeCd: 0, dodgeTime: 0, closeDodges: 0, particles: [], reactDelay: 0, invuln: 0,
+  dashCd: 0, dashTime: 0, dodgeCd: 0, dodgeTime: 0, closeDodges: 0, particles: [], reactDelay: 0, invuln: 0, ghostTime: 0, freezeCd: 0,
   runTime: 0, popups: [], keys: {},
   lastBreakQ: 0, matchCoins: 0, matchBoost: false,
   stepAcc: 0, stepAlt: false, time: 0,
-  matchTime: matchLen(), streak: 0, rings: [], chasers: [],
+  matchTime: matchLen(), streak: 0, rings: [], chasers: [], matchGoals: 0, matchPerfect: 0, defTags: 0, goldBall: null,
   joySX: 0, joySY: 0, timeUpFlag: false, _timerSec: -1
 };
 var joy = { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0, mag: 0, cx: 0, cy: 0 };
@@ -722,6 +769,9 @@ function sndTag() { tone(220, 0.16, "sawtooth", 0.13, 0, 90); noiseBurst(0.12, 0
 function sndOut() { tone(320, 0.2, "sawtooth", 0.10, 0, 210); tone(190, 0.3, "sawtooth", 0.10, 0.12, 120); }
 function sndScore() { [660, 880, 1100, 1470].forEach(function(f, i){ tone(f, 0.15, "triangle", 0.15, i * 0.07); }); noiseBurst(0.35, 0.05, 0.1, 3000, 4200); }
 function sndCoin() { tone(1318, 0.09, "sine", 0.14); tone(1760, 0.16, "sine", 0.14, 0.07); }
+function sndAch() { [880, 1108, 1318].forEach(function(f, i){ tone(f, 0.14, "triangle", 0.13, i * 0.07); }); }
+function sndGhost() { tone(900, 0.22, "sine", 0.10, 0, 320); noiseBurst(0.15, 0.06, 0, 1200, 2600); }
+function sndFreeze() { tone(1250, 0.14, "sine", 0.11); tone(1660, 0.2, "sine", 0.11, 0.08); }
 function sndRevive() { [520, 700, 940].forEach(function(f, i){ tone(f, 0.13, "triangle", 0.13, i * 0.06); }); }
 function sndWin() { [523, 659, 784, 1046, 784, 1046].forEach(function(f, i){ tone(f, 0.2, "triangle", 0.15, i * 0.13); }); noiseBurst(0.5, 0.05, 0.2, 2800, 4500); }
 function sndLose() { [440, 392, 330, 262].forEach(function(f, i){ tone(f, 0.24, "triangle", 0.13, i * 0.16); }); }
@@ -872,19 +922,25 @@ canvas.addEventListener("pointerup", joyEnd);
 canvas.addEventListener("pointercancel", joyEnd);
 window.addEventListener("keydown", function(e) {
   S.keys[e.key.toLowerCase()] = true;
+  if (e.key === "Escape" && !el("shopOverlay").hidden) { closeShop(); return; }
   if (S.paused) { if (e.key === "Escape") togglePause(false); return; }
-  if (e.key === "Escape" && (S.state === "run" || S.state === "defrun" || S.state === "chain" || S.state === "defchain")) { togglePause(true); return; }
+  if (e.key === "Escape" && (S.state === "run" || S.state === "defrun" || S.state === "chain" || S.state === "defchain" || S.state === "banner")) { togglePause(true); return; }
   if (S.state === "chain" && (e.key === " " || e.key === "Enter")) { e.preventDefault(); doBreak(); }
   else if (S.state === "run" && e.key === " ") { e.preventDefault(); tryDash(); }
   else if (S.state === "run" && (e.key === "Shift" || e.key.toLowerCase() === "f")) { e.preventDefault(); tryDodge(); }
+  else if (S.state === "run" && e.key.toLowerCase() === "g") { e.preventDefault(); tryGhost(); }
+  else if (S.state === "run" && e.key.toLowerCase() === "h") { e.preventDefault(); tryFreeze(); }
 });
 window.addEventListener("keyup", function(e) { S.keys[e.key.toLowerCase()] = false; });
+/* Stuck-key guard: if the player releases a key while the tab/window is not
+   focused, no keyup ever arrives — clear the held keys so the runner stops. */
+window.addEventListener("blur", function() { S.keys = {}; });
 document.addEventListener("visibilitychange", function() {
-  if (document.hidden && !S.paused && (S.state === "run" || S.state === "defrun" || S.state === "chain" || S.state === "defchain" || S.state === "banner")) togglePause(true);
+  if (document.hidden) { S.keys = {}; if (!S.paused && (S.state === "run" || S.state === "defrun" || S.state === "chain" || S.state === "defchain" || S.state === "banner")) togglePause(true); }
 });
 /* ================= dom refs ================= */
 var el = function(id){ return document.getElementById(id); };
-var breakBtn = el("breakBtn"), dashBtn = el("dashBtn"), dodgeBtn = el("dodgeBtn"), hintEl = el("hint");
+var breakBtn = el("breakBtn"), dashBtn = el("dashBtn"), dodgeBtn = el("dodgeBtn"), ghostBtn = el("ghostBtn"), freezeBtn = el("freezeBtn"), hintEl = el("hint");
 var timerTagEl = el("timerTag"), streakTagEl = el("streakTag");
 /* ---------- match clock, streak tag, daily reward ---------- */
 function fmtTime(sec) {
@@ -921,7 +977,7 @@ function timeUp() {
   S.afterBanner = null;
   el("banner").classList.remove("show");
   el("goalFx").hidden = true;
-  breakBtn.hidden = true; dashBtn.hidden = true; dodgeBtn.hidden = true;
+  breakBtn.hidden = true; dashBtn.hidden = true; dodgeBtn.hidden = true; ghostBtn.hidden = true; freezeBtn.hidden = true;
   setHint(null);
   endMatch();
 }
@@ -931,6 +987,8 @@ function pressBtn(btn, fn) {
 pressBtn(breakBtn, function() { if (!S.paused && S.state === "chain") doBreak(); });
 pressBtn(dashBtn, function() { if (!S.paused) tryDash(); });
 pressBtn(dodgeBtn, function() { if (!S.paused) tryDodge(); });
+pressBtn(ghostBtn, function() { if (!S.paused) tryGhost(); });
+pressBtn(freezeBtn, function() { if (!S.paused) tryFreeze(); });
 el("coinChip").addEventListener("click", function() { sndClick(); openShop(S.state === "menu" ? "menu" : (S.state === "end" ? "end" : "game")); });
 el("pauseBtn").addEventListener("click", function() {
   ensureAudio();
@@ -987,7 +1045,7 @@ el("restartBtn").addEventListener("click", function() {
 el("quitBtn").addEventListener("click", function() {
   sndClick(); togglePause(false, true);
   S.state = "menu";
-  breakBtn.hidden = true; dashBtn.hidden = true; dodgeBtn.hidden = true; setHint(null); joyHide();
+  breakBtn.hidden = true; dashBtn.hidden = true; dodgeBtn.hidden = true; ghostBtn.hidden = true; freezeBtn.hidden = true; setHint(null); joyHide();
   refreshMenuStats(); updateStatus();
   el("menuOverlay").hidden = false;
 });
@@ -1044,6 +1102,9 @@ function applyLang() {
   el("breakBtn").textContent = t.tapBreak;
   el("dashLabel").textContent = t.dash;
   el("dodgeLabel").textContent = t.dodge;
+  el("ghostLabel").textContent = t.ghostLabel;
+  el("freezeLabel").textContent = t.freezeLabel;
+  el("achLabel").textContent = t.achLabel; refreshAchRow();
   el("fsYouLabel").textContent = t.youTeam; el("fsOppLabel").textContent = t.oppTeam;
   el("statCoinsLabel").textContent = t.statCoins;
   el("statBestLabel").textContent = t.statBest;
@@ -1079,6 +1140,7 @@ function refreshMenuStats() {
   el("menuBest").textContent = num(SAVE.best);
   el("menuWins").textContent = num(SAVE.wins);
   el("menuStreak").textContent = num(SAVE.bestStreak);
+  refreshAchRow();
   checkDaily();
 }
 function refreshLifeTag() {
@@ -1111,7 +1173,7 @@ function showBanner(main, sub, dur, cb) {
   b.innerHTML = main + (sub ? "<small>" + sub + "</small>" : "");
   b.classList.add("show");
   S.state = "banner"; S.bannerTimer = dur || 1.3; S.afterBanner = cb || null;
-  breakBtn.hidden = true; dashBtn.hidden = true; dodgeBtn.hidden = true; setHint(null); joyHide();
+  breakBtn.hidden = true; dashBtn.hidden = true; dodgeBtn.hidden = true; ghostBtn.hidden = true; freezeBtn.hidden = true; setHint(null); joyHide();
 }
 
 /* ================= coins + shop ================= */
@@ -1124,14 +1186,35 @@ function addCoins(n, x, y) {
   if (x !== undefined) addPopup(x, y - 30, T[S.lang].coinPlus(n), "#ffd83d");
   sndCoin();
 }
+var ACH = ["first_goal", "hat_trick", "perfect3", "captain_goal", "first_win", "tag_master"];
+function unlockAch(id) {
+  if (SAVE.ach.indexOf(id) >= 0) return;
+  SAVE.ach.push(id); persist();
+  addPopupCenter(T[S.lang].achUnlock + " " + T[S.lang].achNames[id]);
+  sndAch();
+  refreshAchRow();
+}
+function refreshAchRow() {
+  var row = el("achRow");
+  if (!row) return;
+  var t = T[S.lang];
+  row.innerHTML = ACH.map(function(id) {
+    var on = SAVE.ach.indexOf(id) >= 0;
+    return '<span class="ach-chip' + (on ? ' on' : '') + '">' + (on ? '🏆 ' : '🔒 ') + t.achNames[id] + '</span>';
+  }).join("");
+}
 function openShop(from) {
   S.shopFrom = from || "menu";
-  if ((S.state === "run" || S.state === "defrun" || S.state === "chain" || S.state === "defchain" || S.state === "banner") && !S.paused) togglePause(true, true);
+  S.shopPaused = false;
+  if ((S.state === "run" || S.state === "defrun" || S.state === "chain" || S.state === "defchain" || S.state === "banner") && !S.paused) { togglePause(true, true); S.shopPaused = true; }
   renderShop();
   el("shopOverlay").hidden = false;
 }
 function closeShop() {
   el("shopOverlay").hidden = true;
+  /* If opening the shop paused a live match, closing it resumes the match —
+     otherwise the player is left staring at the pause menu with no hint. */
+  if (S.shopPaused) { S.shopPaused = false; togglePause(false); }
   refreshHud(); refreshMenuStats();
 }
 function ownedBadge(n) {
@@ -1163,6 +1246,16 @@ function playBuyFx(key, rect) {
     })(offs[i], i);
   }
 }
+/* Escape admin-controlled text before it goes into innerHTML (shop rows).
+   Skin/theme names, descriptions, colors and ids come from settings
+   (local admin copy or Supabase); without this a crafted value could inject
+   markup into every visitor's page (stored XSS). Static UI strings are
+   hardcoded and need no escaping. */
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
 function renderShop() {
   var t = T[S.lang], bn = S.lang === "bn";
   el("shopCoins").textContent = num(SAVE.coins);
@@ -1173,9 +1266,9 @@ function renderShop() {
     var on = SAVE.skin === sk.id;
     var btn;
     if (on) btn = '<button class="buy equipped" disabled>' + t.equipped + "</button>";
-    else if (owned) btn = '<button class="buy equip" data-act="equip-skin" data-id="' + sk.id + '">' + t.equip + "</button>";
-    else btn = '<button class="buy" data-act="buy-skin" data-id="' + sk.id + '"' + (SAVE.coins < sk.price ? " disabled" : "") + ">" + t.buy(sk.price) + "</button>";
-    h += '<div class="shop-item" data-item="skin-' + sk.id + '"><div class="sw" style="background:' + sk.color + '">👕</div><div class="info"><div class="nm">' + (bn ? sk.bn : sk.en) + (owned && !on ? ' <span class="owned-badge">' + t.ownedTag + '</span>' : '') + '</div><div class="ds">' + (bn ? sk.dsBn : sk.dsEn) + "</div></div>" + btn + "</div>";
+    else if (owned) btn = '<button class="buy equip" data-act="equip-skin" data-id="' + esc(sk.id) + '">' + t.equip + "</button>";
+    else btn = '<button class="buy" data-act="buy-skin" data-id="' + esc(sk.id) + '"' + (SAVE.coins < sk.price ? " disabled" : "") + ">" + t.buy(sk.price) + "</button>";
+    h += '<div class="shop-item" data-item="skin-' + esc(sk.id) + '"><div class="sw" style="background:' + esc(sk.color) + '">👕</div><div class="info"><div class="nm">' + (bn ? esc(sk.bn) : esc(sk.en)) + (owned && !on ? ' <span class="owned-badge">' + t.ownedTag + '</span>' : '') + '</div><div class="ds">' + (bn ? esc(sk.dsBn) : esc(sk.dsEn)) + "</div></div>" + btn + "</div>";
   });
   h += '<div class="shop-sec">' + t.secThemes + "</div>";
   THEMES.forEach(function(th) {
@@ -1183,50 +1276,82 @@ function renderShop() {
     var on = SAVE.theme === th.id;
     var btn;
     if (on) btn = '<button class="buy equipped" disabled>' + t.themeOn + "</button>";
-    else if (owned) btn = '<button class="buy equip" data-act="use-theme" data-id="' + th.id + '">' + t.useTheme + "</button>";
-    else btn = '<button class="buy" data-act="buy-theme" data-id="' + th.id + '"' + (SAVE.coins < th.price ? " disabled" : "") + ">" + t.buy(th.price) + "</button>";
-    h += '<div class="shop-item" data-item="theme-' + th.id + '"><div class="sw" style="background:linear-gradient(180deg,' + th.sky + ' 45%,' + th.gA + ' 45%)">🌾</div><div class="info"><div class="nm">' + (bn ? th.bn : th.en) + (owned && !on ? ' <span class="owned-badge">' + t.ownedTag + '</span>' : '') + '</div><div class="ds">' + (bn ? th.dsBn : th.dsEn) + "</div></div>" + btn + "</div>";
+    else if (owned) btn = '<button class="buy equip" data-act="use-theme" data-id="' + esc(th.id) + '">' + t.useTheme + "</button>";
+    else btn = '<button class="buy" data-act="buy-theme" data-id="' + esc(th.id) + '"' + (SAVE.coins < th.price ? " disabled" : "") + ">" + t.buy(th.price) + "</button>";
+    h += '<div class="shop-item" data-item="theme-' + esc(th.id) + '"><div class="sw" style="background:linear-gradient(180deg,' + esc(th.sky) + ' 45%,' + esc(th.gA) + ' 45%)">🌾</div><div class="info"><div class="nm">' + (bn ? esc(th.bn) : esc(th.en)) + (owned && !on ? ' <span class="owned-badge">' + t.ownedTag + '</span>' : '') + '</div><div class="ds">' + (bn ? esc(th.dsBn) : esc(th.dsEn)) + "</div></div>" + btn + "</div>";
   });
   h += '<div class="shop-sec">' + t.secPower + "</div>";
   h += '<div class="shop-item" data-item="boost"><div class="sw" style="background:#ffe9a8">⚡</div><div class="info"><div class="nm">' + t.boostName + (S.matchBoost ? " · " + t.boostOn : "") + '</div><div class="ds">' + t.boostDs + " · " + ownedBadge(SAVE.speedBoosts) + '</div></div><button class="buy" data-act="buy-boost"' + (SAVE.coins < powerPrice("boost", 30) ? " disabled" : "") + ">" + t.buy(powerPrice("boost", 30)) + "</button></div>";
   h += '<div class="shop-item" data-item="life"><div class="sw" style="background:#ffd3d3">❤️</div><div class="info"><div class="nm">' + t.lifeName + '</div><div class="ds">' + t.lifeDs + " · " + ownedBadge(SAVE.extraLives) + '</div></div><button class="buy" data-act="buy-life"' + (SAVE.coins < powerPrice("life", 40) ? " disabled" : "") + ">" + t.buy(powerPrice("life", 40)) + "</button></div>";
+  h += '<div class="shop-item" data-item="ghost"><div class="sw" style="background:#e6d5f7">👻</div><div class="info"><div class="nm">' + t.ghostName + '</div><div class="ds">' + t.ghostDs + " · " + ownedBadge(SAVE.ghosts) + '</div></div><button class="buy" data-act="buy-ghost"' + (SAVE.coins < powerPrice("ghost", 120) ? " disabled" : "") + ">" + t.buy(powerPrice("ghost", 120)) + "</button></div>";
+  h += '<div class="shop-item" data-item="freeze"><div class="sw" style="background:#cfeef7">❄️</div><div class="info"><div class="nm">' + t.freezeName + '</div><div class="ds">' + t.freezeDs + " · " + ownedBadge(SAVE.freezes) + '</div></div><button class="buy" data-act="buy-freeze"' + (SAVE.coins < powerPrice("freeze", 100) ? " disabled" : "") + ">" + t.buy(powerPrice("freeze", 100)) + "</button></div>";
   if (SAVE.dashPro) h += '<div class="shop-item" data-item="dash"><div class="sw" style="background:#d8f3dc">💨</div><div class="info"><div class="nm">' + t.dashUpName + '</div><div class="ds">' + t.dashUpDs + '</div></div><button class="buy equipped" disabled>' + t.ownedTag + "</button></div>";
   else h += '<div class="shop-item" data-item="dash"><div class="sw" style="background:#d8f3dc">💨</div><div class="info"><div class="nm">' + t.dashUpName + '</div><div class="ds">' + t.dashUpDs + '</div></div><button class="buy" data-act="buy-dash"' + (SAVE.coins < powerPrice("dash", 150) ? " disabled" : "") + ">" + t.buy(powerPrice("dash", 150)) + "</button></div>";
   if (SAVE.turboBoots) h += '<div class="shop-item" data-item="turbo"><div class="sw" style="background:#ffe9a8">👟</div><div class="info"><div class="nm">' + t.turboName + '</div><div class="ds">' + t.turboDs + '</div></div><button class="buy equipped" disabled>' + t.ownedTag + "</button></div>";
   else h += '<div class="shop-item" data-item="turbo"><div class="sw" style="background:#ffe9a8">👟</div><div class="info"><div class="nm">' + t.turboName + '</div><div class="ds">' + t.turboDs + '</div></div><button class="buy" data-act="buy-turbo"' + (SAVE.coins < powerPrice("turbo", 200) ? " disabled" : "") + ">" + t.buy(powerPrice("turbo", 200)) + "</button></div>";
   el("shopList").innerHTML = h;
 }
+function shopItemPrice(key) {
+  if (key.indexOf("skin-") === 0) return skinById(key.slice(5)).price;
+  if (key.indexOf("theme-") === 0) return themeById(key.slice(6)).price;
+  if (key === "boost") return powerPrice("boost", 30);
+  if (key === "life") return powerPrice("life", 40);
+  if (key === "ghost") return powerPrice("ghost", 120);
+  if (key === "freeze") return powerPrice("freeze", 100);
+  if (key === "dash") return powerPrice("dash", 150);
+  if (key === "turbo") return powerPrice("turbo", 200);
+  return 0;
+}
 el("shopList").addEventListener("click", function(e) {
   var b = e.target.closest ? e.target.closest("button[data-act]") : null;
-  if (!b || b.disabled) return;
+  if (!b) {
+    // tapped a shop row (not a buy button): show the not-enough-coins toast when unaffordable
+    var row = e.target.closest ? e.target.closest(".shop-item") : null;
+    if (row) {
+      var btn = row.querySelector("button[data-act]");
+      if (btn && btn.getAttribute("data-act").indexOf("buy-") === 0) {
+        var key = row.getAttribute("data-item") || "";
+        if (shopItemPrice(key) > SAVE.coins) { ensureAudio(); sndDeny(); addPopupCenter(T[S.lang].notEnough); }
+      }
+    }
+    return;
+  }
+  if (b.disabled) return;
   var act = b.getAttribute("data-act"), id = b.getAttribute("data-id"), t = T[S.lang];
   var rect = b.getBoundingClientRect(), boughtKey = null;
   ensureAudio();
   if (act === "buy-skin") {
     var sk = skinById(id);
-    if (SAVE.coins < sk.price) { sndDeny(); return; }
+    if (SAVE.coins < sk.price) { sndDeny(); addPopupCenter(t.notEnough); return; }
     SAVE.coins -= sk.price; SAVE.ownedSkins.push(sk.id); SAVE.skin = sk.id;
     persist(); sndCoin(); addPopupCenter(t.bought); boughtKey = "skin-" + sk.id;
   } else if (act === "equip-skin") { SAVE.skin = id; persist(); sndClick(); }
   else if (act === "buy-theme") {
     var th = themeById(id);
-    if (SAVE.coins < th.price) { sndDeny(); return; }
+    if (SAVE.coins < th.price) { sndDeny(); addPopupCenter(t.notEnough); return; }
     SAVE.coins -= th.price; SAVE.ownedThemes.push(th.id); SAVE.theme = th.id;
     persist(); buildField(); sndCoin(); addPopupCenter(t.bought); boughtKey = "theme-" + th.id;
   } else if (act === "use-theme") { SAVE.theme = id; persist(); buildField(); sndClick(); }
   else if (act === "buy-boost") {
-    if (SAVE.coins < powerPrice("boost", 30)) { sndDeny(); return; }
+    if (SAVE.coins < powerPrice("boost", 30)) { sndDeny(); addPopupCenter(t.notEnough); return; }
     SAVE.coins -= powerPrice("boost", 30); SAVE.speedBoosts++; persist(); sndCoin(); boughtKey = "boost";
   } else if (act === "buy-life") {
-    if (SAVE.coins < powerPrice("life", 40)) { sndDeny(); return; }
+    if (SAVE.coins < powerPrice("life", 40)) { sndDeny(); addPopupCenter(t.notEnough); return; }
     SAVE.coins -= powerPrice("life", 40); SAVE.extraLives++; persist(); sndCoin(); refreshLifeTag(); boughtKey = "life";
   }
+  else if (act === "buy-ghost") {
+    if (SAVE.coins < powerPrice("ghost", 120)) { sndDeny(); addPopupCenter(t.notEnough); return; }
+    SAVE.coins -= powerPrice("ghost", 120); SAVE.ghosts++; persist(); sndCoin(); boughtKey = "ghost";
+  } else if (act === "buy-freeze") {
+    if (SAVE.coins < powerPrice("freeze", 100)) { sndDeny(); addPopupCenter(t.notEnough); return; }
+    SAVE.coins -= powerPrice("freeze", 100); SAVE.freezes++; persist(); sndCoin(); boughtKey = "freeze";
+  }
   else if (act === "buy-dash") {
-    if (SAVE.coins < powerPrice("dash", 150)) { sndDeny(); return; }
+    if (SAVE.coins < powerPrice("dash", 150)) { sndDeny(); addPopupCenter(t.notEnough); return; }
     SAVE.coins -= powerPrice("dash", 150); SAVE.dashPro = true; persist(); sndCoin(); addPopupCenter(t.bought); boughtKey = "dash";
   }
   else if (act === "buy-turbo") {
-    if (SAVE.coins < powerPrice("turbo", 200)) { sndDeny(); return; }
+    if (SAVE.coins < powerPrice("turbo", 200)) { sndDeny(); addPopupCenter(t.notEnough); return; }
     SAVE.coins -= powerPrice("turbo", 200); SAVE.turboBoots = true; persist(); sndCoin(); addPopupCenter(t.bought); boughtKey = "turbo";
   }
   renderShop(); refreshHud(); refreshMenuStats();
@@ -1236,9 +1361,10 @@ function addPopupCenter(text) { addPopup(VW / 2, VH / 2 - 60, text, "#ffffff"); 
 
 /* ================= game flow ================= */
 function startMatch() {
-  S.youScore = 0; S.oppScore = 0; S.matchCoins = 0;
+  S.youScore = 0; S.oppScore = 0; S.matchCoins = 0; S.matchGoals = 0; S.matchPerfect = 0; S.defTags = 0;
   S.phase = "attack"; S.runnerIdx = 0;
   S.matchTime = matchLen(); S.streak = 0; S.timeUpFlag = false; S._timerSec = -1;
+  S.goldBall = { x: 50 + Math.random() * (VW - 100), y: 150 + Math.random() * (VH - 300), taken: false };
   S.rings.length = 0; S.particles.length = 0;
   _streakShown = -1; refreshStreakTag();
   S.matchBoost = false;
@@ -1254,7 +1380,7 @@ function startChain() {
   S.state = "chain";
   S.chainAngle = Math.random() * Math.PI * 2;
   S.runner = null; S.taggers = []; S.helpers = [];
-  breakBtn.hidden = false; dashBtn.hidden = true; dodgeBtn.hidden = true;
+  breakBtn.hidden = false; dashBtn.hidden = true; dodgeBtn.hidden = true; ghostBtn.hidden = true; freezeBtn.hidden = true;
   setHint(T[S.lang].chainHint);
   updateStatus(); sndWhistle();
 }
@@ -1269,7 +1395,7 @@ function startDefChain() {
     { x: VW / 2 - 90, y: 250, vx: 0, vy: 0, speed: hs },
     { x: VW / 2 + 90, y: 250, vx: 0, vy: 0, speed: hs }
   ];
-  breakBtn.hidden = true; dashBtn.hidden = true;
+  breakBtn.hidden = true; dashBtn.hidden = true; ghostBtn.hidden = true; freezeBtn.hidden = true;
   setHint(T[S.lang].waitBreak);
   updateStatus(); sndWhistle();
 }
@@ -1298,8 +1424,8 @@ function doBreak() {
     var r = 150 + Math.random() * 90;
     S.taggers.push({ x: CENTER.x + Math.cos(a) * r, y: CENTER.y + Math.sin(a) * r, vx: 0, vy: 0, speed: (146 + S.level * 7 + Math.random() * 12) * df.tagSpd });
   }
-  S.state = "run"; S.runTime = 0; S.dashCd = 0; S.dashTime = 0; S.dodgeCd = 0; S.dodgeTime = 0; S.invuln = 0; S.stepAcc = 0;
-  breakBtn.hidden = true; dashBtn.hidden = false; dashBtn.disabled = false; dodgeBtn.hidden = false; dodgeBtn.disabled = false;
+  S.state = "run"; S.runTime = 0; S.dashCd = 0; S.dashTime = 0; S.dodgeCd = 0; S.dodgeTime = 0; S.invuln = 0; S.stepAcc = 0; S.ghostTime = 0; S.freezeCd = 0;
+  breakBtn.hidden = true; dashBtn.hidden = false; dashBtn.disabled = false; dodgeBtn.hidden = false; dodgeBtn.disabled = false; ghostBtn.hidden = false; ghostBtn.disabled = SAVE.ghosts <= 0; freezeBtn.hidden = false; freezeBtn.disabled = SAVE.freezes <= 0;
   setHint(t.dragHintRun);
   updateStatus(); sndBreak(q);
   addPopup(p.x, p.y - 24, q === 2 ? t.perfect : (q === 1 ? t.good : t.normal), "#ffd83d");
@@ -1355,6 +1481,22 @@ function tryDodge() {
     speak("dodge");
   }
 }
+/* ---- GHOST / FREEZE: shop-bought active power-ups (attack run only) ---- */
+function tryGhost() {
+  if (S.state !== "run" || !S.runner || S.paused || SAVE.ghosts <= 0 || S.ghostTime > 0) return;
+  SAVE.ghosts--; persist();
+  S.ghostTime = 3;
+  sndGhost();
+  addPopup(S.runner.x, S.runner.y - 54, T[S.lang].ghostName, "#b284ff");
+}
+function tryFreeze() {
+  if (S.state !== "run" || !S.runner || S.paused || SAVE.freezes <= 0 || S.freezeCd > 0) return;
+  SAVE.freezes--; persist();
+  for (var i = 0; i < S.taggers.length; i++) { S.taggers[i].stun = 2; S.taggers[i].vx = 0; S.taggers[i].vy = 0; }
+  S.freezeCd = 8;
+  sndFreeze();
+  addPopup(S.runner.x, S.runner.y - 54, T[S.lang].freezeName, "#9fd8ff");
+}
 /* ---- GOAL celebration: big word, fanfare handled by sndGoal, confetti ---- */
 function goalCelebration(x, y) {
   var fx = el("goalFx");
@@ -1381,10 +1523,16 @@ function resolveRun(success) {
     if (success) {
       var pts = r.captain ? 2 : 1;
       S.youScore += pts; SAVE.totalTargets++;
+      S.matchGoals++;
+      if (SAVE.totalTargets === 1) unlockAch("first_goal");
+      if (S.matchGoals === 3) unlockAch("hat_trick");
+      if (r.captain) unlockAch("captain_goal");
+      if (S.lastBreakQ === 2) { S.matchPerfect++; if (S.matchPerfect === 3) unlockAch("perfect3"); }
       S.streak++;
       if (S.streak > SAVE.bestStreak) SAVE.bestStreak = S.streak;
       var streakBonus = S.streak >= 2 ? (S.streak - 1) * coinStreakStep() : 0;
       var coins = (r.captain ? coinGoalCap() : coinGoal()) + (S.lastBreakQ === 2 ? coinPerfect() : 0) + streakBonus;
+      if (S.streak >= 3) { coins *= 2; addPopup(r.x, r.y - 82, t.comboTag, "#ff9d5c"); }
       S.rings.push({ x: r.x, y: r.y, r: 8, life: 0.55, color: "#ffd83d" });
       sndGoal();
       goalCelebration(r.x, r.y);
@@ -1417,6 +1565,8 @@ function resolveRun(success) {
       showBanner(t.oppGoal, t.oppPoint(pts2), 1.4, nextDefRunner);
     } else {
       SAVE.totalTags++;
+      S.defTags++;
+      if (S.defTags === 5) unlockAch("tag_master");
       S.rings.push({ x: r.x, y: r.y, r: 8, life: 0.5, color: "#7be495" });
       sndTag(); sndScore();
       speak("youtag");
@@ -1451,9 +1601,12 @@ function endMatch() {
   el("banner").classList.remove("show");
   var t = T[S.lang];
   var title = t.draw, txt = t.endDrawText, bonus = coinDraw();
-  if (S.youScore > S.oppScore) { title = t.win; txt = t.endWinText; SAVE.wins++; bonus = coinWin(); }
-  else if (S.youScore < S.oppScore) { title = t.lose; txt = t.endLoseText; bonus = 0; }
+  var streakBonus = 0;
+  if (S.youScore > S.oppScore) { title = t.win; txt = t.endWinText; SAVE.wins++; SAVE.winStreak++; bonus = coinWin(); if (SAVE.winStreak % 3 === 0) { streakBonus = 50; bonus += 50; } if (SAVE.wins === 1) unlockAch("first_win"); }
+  else if (S.youScore < S.oppScore) { title = t.lose; txt = t.endLoseText; bonus = 0; SAVE.winStreak = 0; }
+  else SAVE.winStreak = 0;
   if (S.timeUpFlag) txt = t.timeUp + " " + txt;
+  if (S.youScore > S.oppScore) { txt += " " + t.winStreakText(SAVE.winStreak); if (streakBonus > 0) txt += " " + t.streakBonusText; }
   if (bonus > 0) { SAVE.coins += bonus; S.matchCoins += bonus; }
   if (S.youScore > SAVE.best) SAVE.best = S.youScore;
   persist();
@@ -1569,8 +1722,12 @@ function update(dt) {
     if (S.dashTime > 0) S.dashTime -= dt;
     if (S.dodgeCd > 0) S.dodgeCd -= dt;
     if (S.invuln > 0) S.invuln -= dt;
+    if (S.ghostTime > 0) S.ghostTime -= dt;
+    if (S.freezeCd > 0) S.freezeCd -= dt;
     dashBtn.disabled = S.dashCd > 0;
     dodgeBtn.disabled = S.dodgeCd > 0;
+    ghostBtn.disabled = SAVE.ghosts <= 0;
+    freezeBtn.disabled = S.freezeCd > 0 || SAVE.freezes <= 0;
     var r = S.runner;
     if (S.dodgeTime > 0) {
       // katakati burst: hard sidestep in the stored feint direction
@@ -1587,6 +1744,11 @@ function update(dt) {
     r.x += r.vx * dt; r.y += r.vy * dt;
     clampField(r, 15);
     stepSounds(r, dt);
+    if (S.goldBall && !S.goldBall.taken && Math.hypot(r.x - S.goldBall.x, r.y - S.goldBall.y) < 26) {
+      S.goldBall.taken = true;
+      addCoins(15);
+      addPopup(S.goldBall.x, S.goldBall.y - 30, T[S.lang].goldBall, "#ffd83d");
+    }
     if (S.reactDelay > 0) S.reactDelay -= dt;
     else {
       for (j = 0; j < S.taggers.length; j++) {
@@ -1594,7 +1756,7 @@ function update(dt) {
         if (tg.stun > 0) { tg.stun -= dt; tg.x += tg.vx * dt; tg.y += tg.vy * dt; clampField(tg, 15); continue; }
         steerSmooth(tg, r.x + r.vx * 0.22, r.y + r.vy * 0.22, tg.speed, dt, 7);
         clampField(tg, 15);
-        if (S.invuln <= 0 && Math.hypot(tg.x - r.x, tg.y - r.y) < 17) { resolveRun(false); return; }
+        if (S.invuln <= 0 && S.ghostTime <= 0 && Math.hypot(tg.x - r.x, tg.y - r.y) < 17) { resolveRun(false); return; }
       }
       for (var a = 0; a < S.taggers.length; a++) for (var b = a + 1; b < S.taggers.length; b++) {
         var t1 = S.taggers[a], t2 = S.taggers[b];
@@ -1713,6 +1875,16 @@ function draw(now) {
   ctx.lineTo(TARGET.x + 24, TARGET.y - 20 + wave);
   ctx.lineTo(TARGET.x + 3, TARGET.y - 13);
   ctx.closePath(); ctx.fill();
+  if (S.goldBall && !S.goldBall.taken && (S.state === "run" || S.state === "banner")) {
+    var gb = S.goldBall, pulse = 12 + Math.sin(now / 160) * 2.5;
+    ctx.fillStyle = "rgba(255,216,61,0.35)";
+    ctx.beginPath(); ctx.arc(gb.x, gb.y, pulse + 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ffd83d";
+    ctx.beginPath(); ctx.arc(gb.x, gb.y, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = "#b97e06"; ctx.stroke();
+    ctx.fillStyle = "#4a2f00"; ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("★", gb.x, gb.y + 4.5);
+  }
 
   var myColor = skinById(SAVE.skin).color;
   var inChainState = S.state === "chain" || S.state === "defchain" || S.state === "menu" || S.state === "end";
@@ -1741,7 +1913,7 @@ function draw(now) {
       drawPlayer(r.x, r.y, col, {
         moving: true, captain: r.captain,
         ring: S.phase === "attack" ? "#ffffff" : null,
-        flash: S.invuln > 0,
+        flash: S.invuln > 0 || S.ghostTime > 0,
         label: NAMES[S.lang][S.phase === "attack" ? "you" : "opp"][S.runnerIdx]
       });
       if (S.dashTime > 0) {
@@ -1753,6 +1925,10 @@ function draw(now) {
         ctx.beginPath(); ctx.arc(r.x - r.dvx * 20, r.y - r.dvy * 20, 12, 0, Math.PI * 2); ctx.stroke();
         ctx.strokeStyle = "rgba(255,216,61,0.45)";
         ctx.beginPath(); ctx.arc(r.x - r.dvx * 38, r.y - r.dvy * 38, 12, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (S.ghostTime > 0) {
+        ctx.strokeStyle = "rgba(178,132,255,0.85)"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(r.x, r.y, 20, 0, Math.PI * 2); ctx.stroke();
       }
     }
   }

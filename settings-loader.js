@@ -11,7 +11,7 @@
    ========================================================================== */
 (function () {
   var DEFAULTS = {
-    matchLen: 120,
+    matchLen: 180,
     defaultDiff: "medium",
     diffs: {
       easy:   { tagSpd: 0.80, tagCount: -1, aiSpd: 0.85, helpSpd: 0.85, react: 0.55 },
@@ -187,8 +187,11 @@
         { method: "POST", headers: supaHeaders(),
           body: JSON.stringify({ p_hash: passwordHash || "", p_settings: settings }) }, 5000)
       .then(function (r) { return r.json(); })
-      .then(function (ok) {
-        if (ok === true) return { ok: true, mode: "supabase" };
+      .then(function (res) {
+        // New RPC returns text: "ok" | "wrong-password" | "setup-locked".
+        // (Older RPCs returned boolean true; accept that too.)
+        if (res === true || res === "ok") return { ok: true, mode: "supabase" };
+        if (res === "setup-locked") return { ok: false, error: "setup-locked" };
         return { ok: false, error: "wrong-password" };
       })
       .catch(function () { return { ok: false, error: "network" }; });
@@ -213,19 +216,68 @@
       .catch(function () { return []; });
   };
 
-  /* ---- SHA-256 hex (admin password; never store the plain password) ---- */
-  window.KhelaghorSha256 = function (text) {
-    if (typeof crypto !== "undefined" && crypto.subtle && crypto.subtle.digest) {
-      return crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)).then(function (buf) {
-        return Array.prototype.map.call(new Uint8Array(buf),
-          function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
-      });
+  /* ---- admin password hashing ----
+     New passwords use PBKDF2-HMAC-SHA256 (120k iterations, random 16-byte
+     salt) — stored as "pbkdf2$120000$<saltHex>$<hashHex>".
+     Old passwords (plain unsalted SHA-256 hex) still verify, so nobody is
+     locked out by this upgrade; they are re-hashed with PBKDF2 the next
+     time the password is changed. The old FNV-1a fallback is REMOVED:
+     without WebCrypto (e.g. plain http) hashing now FAILS CLOSED instead
+     of storing a trivially reversible hash. */
+  function hex(buf) {
+    return Array.prototype.map.call(new Uint8Array(buf),
+      function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+  }
+  function unhex(s) {
+    var out = new Uint8Array(s.length / 2);
+    for (var i = 0; i < out.length; i++) out[i] = parseInt(s.substr(i * 2, 2), 16);
+    return out;
+  }
+  function subtle() {
+    if (typeof crypto !== "undefined" && crypto.subtle && crypto.subtle.digest) return crypto.subtle;
+    return null;
+  }
+  function constEq(a, b) {
+    if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
+    var d = 0;
+    for (var i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    return d === 0;
+  }
+  window.KhelaghorHashPassword = function (text) {
+    var s = subtle();
+    if (!s || !s.importKey || !s.deriveBits) return Promise.reject(new Error("crypto-unavailable"));
+    var salt = new Uint8Array(16);
+    if (typeof crypto.getRandomValues === "function") crypto.getRandomValues(salt);
+    else return Promise.reject(new Error("crypto-unavailable"));
+    return s.importKey("raw", new TextEncoder().encode(text), "PBKDF2", false, ["deriveBits"])
+      .then(function (key) {
+        return s.deriveBits({ name: "PBKDF2", salt: salt, iterations: 120000, hash: "SHA-256" }, key, 256);
+      })
+      .then(function (bits) { return "pbkdf2$120000$" + hex(salt) + "$" + hex(bits); });
+  };
+  window.KhelaghorVerifyPassword = function (text, stored) {
+    if (!stored || typeof stored !== "string") return Promise.resolve(false);
+    if (stored.indexOf("pbkdf2$") === 0) {
+      var parts = stored.split("$");
+      if (parts.length !== 4) return Promise.resolve(false);
+      var iters = parseInt(parts[1], 10), saltHex = parts[2], want = parts[3];
+      if (!isFinite(iters) || iters < 1000 || !/^[0-9a-f]{32}$/.test(saltHex) || !/^[0-9a-f]{64}$/.test(want)) return Promise.resolve(false);
+      var s = subtle();
+      if (!s || !s.importKey || !s.deriveBits) return Promise.reject(new Error("crypto-unavailable"));
+      return s.importKey("raw", new TextEncoder().encode(text), "PBKDF2", false, ["deriveBits"])
+        .then(function (key) {
+          return s.deriveBits({ name: "PBKDF2", salt: unhex(saltHex), iterations: iters, hash: "SHA-256" }, key, 256);
+        })
+        .then(function (bits) { return constEq(hex(bits), want); });
     }
-    return Promise.resolve("fnv1a-" + (function (s) {
-      var h1 = 0x811c9dc5, h2 = 0x01000193;
-      for (var i = 0; i < s.length; i++) { h1 = Math.imul(h1 ^ s.charCodeAt(i), 16777619); h2 = Math.imul(h2 ^ s.charCodeAt(i), 31); }
-      return (h1 >>> 0).toString(16) + (h2 >>> 0).toString(16);
-    })(text));
+    // Legacy: unsalted SHA-256 hex (kept only so existing passwords still work).
+    if (/^[0-9a-f]{64}$/.test(stored)) return window.KhelaghorSha256(text).then(function (h) { return constEq(h, stored); });
+    return Promise.resolve(false);
+  };
+  window.KhelaghorSha256 = function (text) {
+    var s = subtle();
+    if (!s) return Promise.reject(new Error("crypto-unavailable"));
+    return s.digest("SHA-256", new TextEncoder().encode(text)).then(function (buf) { return hex(buf); });
   };
 
   loadRemote();
