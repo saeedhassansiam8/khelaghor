@@ -808,6 +808,7 @@ var S = {
   runTime: 0, popups: [], keys: {},
   lastBreakQ: 0, matchCoins: 0, matchBoost: false,
   stepAcc: 0, stepAlt: false, time: 0, shake: 0, dustAcc: 0,
+  ambAcc: 0, ambNext: 1.5, ambChirps: 0, /* birdsong scheduler */
   matchTime: matchLen(), streak: 0, rings: [], chasers: [], matchGoals: 0, matchPerfect: 0, defTags: 0, goldBall: null,
   joySX: 0, joySY: 0, timeUpFlag: false, _timerSec: -1, seriesYou: 0, seriesOpp: 0, cheerT: 0
 };
@@ -873,6 +874,24 @@ function sndCoin() { tone(1318, 0.09, "sine", 0.14); tone(1760, 0.16, "sine", 0.
 function sndAch() { [880, 1108, 1318].forEach(function(f, i){ tone(f, 0.14, "triangle", 0.13, i * 0.07); }); }
 function sndGhost() { tone(900, 0.22, "sine", 0.10, 0, 320); noiseBurst(0.15, 0.06, 0, 1200, 2600); }
 function sndFreeze() { tone(1250, 0.14, "sine", 0.11); tone(1660, 0.2, "sine", 0.11, 0.08); }
+/* ---- ambient village birdsong (WebAudio synth, no files) ---- */
+function sndBird() {
+  var base = 2400 + Math.random() * 1600, n = 2 + Math.floor(Math.random() * 3);
+  for (var i = 0; i < n; i++) {
+    var f = base * (1 + (Math.random() - 0.5) * 0.18);
+    tone(f, 0.07, "sine", 0.045, i * 0.09, f * 1.25);
+  }
+  S.ambChirps++;
+}
+function sndWind() { noiseBurst(1.1, 0.03, 0, 300, 520); noiseBurst(1.4, 0.02, 0.25, 240, 420); }
+function updateAmbient(dt) {
+  if (!S.sound || S.paused) return;
+  S.ambAcc += dt;
+  if (S.ambAcc < S.ambNext) return;
+  S.ambAcc = 0;
+  S.ambNext = 1.4 + Math.random() * 2.6;
+  if (Math.random() < 0.72) sndBird(); else sndWind();
+}
 function sndRevive() { [520, 700, 940].forEach(function(f, i){ tone(f, 0.13, "triangle", 0.13, i * 0.06); }); }
 function sndWin() { [523, 659, 784, 1046, 784, 1046].forEach(function(f, i){ tone(f, 0.2, "triangle", 0.15, i * 0.13); }); noiseBurst(0.5, 0.05, 0.2, 2800, 4500); }
 function sndLose() { [440, 392, 330, 262].forEach(function(f, i){ tone(f, 0.24, "triangle", 0.13, i * 0.16); }); }
@@ -2084,6 +2103,7 @@ function frame(ts) {
   lastTs = ts;
   if (dt <= 0) dt = 0.016;
   S.time += dt;
+  updateAmbient(dt);
   if (S.shake > 0) S.shake = Math.max(0, S.shake - dt * 22);
   if (!S.paused) {
     if (S.state !== "menu" && S.state !== "end") {

@@ -348,10 +348,7 @@
               <div class="seg char-seg" id="charSeg">
                 <button data-char="roni" class="on"><span class="dname">🏃 রনি</span><small class="dsub">সব দিক সমান</small></button>
                 <button data-char="dour"><span class="dname">⚡ দৌড়বাজ</span><small class="dsub">১২% দ্রুত</small></button>
-                <button data-char="chup"><span class="dname">🤫 চুপচাপ</span><small class="dsub">ধরা পড়া ২০% ধীর</small></button>
                 <button data-char="lucky"><span class="dname">🍀 ভাগ্যবান</span><small class="dsub">পাওয়ার-আপ ৫০% বেশি সময়</small></button>
-                <button data-char="brave"><span class="dname">🦸 বীর</span><small class="dsub">লুকিয়ে মিটার ৫০% দ্রুত কমে</small></button>
-                <button data-char="storm"><span class="dname">🌪️ ঝড়</span><small class="dsub">২০% দ্রুত · ধরা পড়া ১৫% দ্রুত</small></button>
                 <button data-char="shadow"><span class="dname">🌑 ছায়া</span><small class="dsub">ধরা পড়া ৩০% ধীর</small></button>
                 <button data-char="dourchhaya"><span class="dname">🥷 দৌড়ছায়া</span><small class="dsub">১২% দ্রুত · ধরা পড়া ৩০% ধীর</small></button>
                 <button data-char="patient"><span class="dname">🧘 ধৈর্য</span><small class="dsub">লুকিয়ে মিটার ২ গুণ দ্রুত কমে</small></button>
@@ -466,6 +463,9 @@ try {
   if (raw) { var parsed = JSON.parse(raw); for (var k in SAVE) if (parsed[k] !== undefined) SAVE[k] = parsed[k]; }
 } catch (e) {}
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
+/* character merge (v10): chup -> shadow, brave -> patient, storm -> dour */
+var CHAR_MERGE = { chup: "shadow", brave: "patient", storm: "dour" };
+if (CHAR_MERGE[SAVE.char]) { SAVE.char = CHAR_MERGE[SAVE.char]; persist(); }
 /* high score (best match coins) — separate key, per the Khelaghor spec */
 var HS_KEY = "khelaghor_lukochuri_highscore";
 function readHighScore() { try { var v = parseInt(localStorage.getItem(HS_KEY) || "0", 10); return isNaN(v) ? 0 : v; } catch (e) { return 0; } }
@@ -728,10 +728,7 @@ var TOTAL_ROUNDS = 5;
 var CHARS = {
   roni: { color: "#1e8a49", emoji: "🏃", spd: 1,    stealth: 1 },
   dour: { color: "#e67e22", emoji: "⚡", spd: 1.12, stealth: 1 },
-  chup: { color: "#1565c0", emoji: "🤫", spd: 1,    stealth: 0.8 },
   lucky: { color: "#7b1fa2", emoji: "🍀", spd: 1,   stealth: 1 },
-  brave: { color: "#c62828", emoji: "🦸", spd: 1,   stealth: 1 },
-  storm: { color: "#00838f", emoji: "🌪️", spd: 1.2,  stealth: 1.15 },
   shadow: { color: "#455a64", emoji: "🌑", spd: 0.95, stealth: 0.7 },
   /* combo: দৌড়বাজের গতি + ছায়ার লুকানো */
   dourchhaya: { color: "#263238", emoji: "🥷", spd: 1.12, stealth: 0.7 },
@@ -752,7 +749,7 @@ var S = {
   lang: SAVE.lang === "en" ? "en" : "bn",
   sound: SAVE.sound !== false,
   diff: (["easy", "hard", "extreme"].indexOf(SAVE.diff) !== -1) ? SAVE.diff : "medium",
-  char: (["dour", "chup", "lucky", "brave", "storm", "shadow", "patient"].indexOf(SAVE.char) !== -1) ? SAVE.char : "roni",
+  char: (["dour", "lucky", "shadow", "patient"].indexOf(SAVE.char) !== -1) ? SAVE.char : "roni",
   mode: (SAVE.mode === "endless") ? "endless" : "normal",
   state: "menu",           /* menu | hide | seek | roundEnd | end | revenge */
   paused: false,
@@ -771,6 +768,7 @@ var S = {
   checkTimer: 0, keys: {}, bob: 0,
   dhappaUsed: false, seekerStun: 0, shake: 0, particles: [], popups: [],
   stepAcc: 0, steps: 0, dustAcc: 0, heartAcc: 0, heartbeats: 0,
+  ambAcc: 0, ambNext: 1.5, ambChirps: 0, /* birdsong scheduler */
   _timerSec: -1
 };
 function diffCfg() { return DIFFS[S.diff]; }
@@ -792,6 +790,8 @@ function spotAt(x, y) {
 }
 /* spot rings + names show only while the player is choosing a spot */
 function spotMarkersVisible() { return S.state === "hide"; }
+/* spot name shows only when the player is close — keeps the field clean */
+function spotLabelVisible(sp) { return Math.hypot(S.player.x - sp.x, S.player.y - sp.y) < 85; }
 
 /* ================= audio (WebAudio tones, no assets) ================= */
 var AC = null;
@@ -845,6 +845,24 @@ function sndAch() { [523, 659, 784, 1046].forEach(function(f, i){ tone(f, 0.12, 
 function sndStep() { S.stepAlt = !S.stepAlt; noiseBurst(0.05, S.stepAlt ? 0.05 : 0.038, 0, S.stepAlt ? 480 : 380, 220); }
 function sndHeart() { tone(58, 0.12, "sine", 0.22); tone(50, 0.14, "sine", 0.18, 0.16); S.heartbeats++; }
 function sndWhoosh() { noiseBurst(0.18, 0.12, 0, 700, 2600); }
+/* ---- ambient village birdsong (WebAudio synth, no files) ---- */
+function sndBird() {
+  var base = 2400 + Math.random() * 1600, n = 2 + Math.floor(Math.random() * 3);
+  for (var i = 0; i < n; i++) {
+    var f = base * (1 + (Math.random() - 0.5) * 0.18);
+    tone(f, 0.07, "sine", 0.045, i * 0.09, f * 1.25);
+  }
+  S.ambChirps++;
+}
+function sndWind() { noiseBurst(1.1, 0.03, 0, 300, 520); noiseBurst(1.4, 0.02, 0.25, 240, 420); }
+function updateAmbient(dt) {
+  if (!S.sound || S.paused) return;
+  S.ambAcc += dt;
+  if (S.ambAcc < S.ambNext) return;
+  S.ambAcc = 0;
+  S.ambNext = 1.4 + Math.random() * 2.6;
+  if (Math.random() < 0.72) sndBird(); else sndWind();
+}
 
 /* ================= canvas + view ================= */
 var canvas = document.getElementById("game");
@@ -949,15 +967,18 @@ function drawField() {
   if (spotMarkersVisible()) for (var i = 0; i < SPOTS.length; i++) {
     var sp = SPOTS[i];
     ctx.save();
-    ctx.setLineDash([6, 5]);
-    ctx.strokeStyle = "rgba(255,255,255,0.75)";
-    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 6]);
+    ctx.strokeStyle = "rgba(255,255,255,0.45)";
+    ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.font = "bold 11px 'Hind Siliguri', sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(T[S.lang].spotNames[sp.id], sp.x, sp.y - sp.r - 6);
+    /* the spot name shows only when the player walks close — the field stays clean */
+    if (spotLabelVisible(sp)) {
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.font = "bold 11px 'Hind Siliguri', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(T[S.lang].spotNames[sp.id], sp.x, sp.y - sp.r - 6);
+    }
     ctx.restore();
   }
   drawCrowd();
@@ -1431,8 +1452,8 @@ function updateSeeker(dt) {
 var CROWD = (function() {
   var cols = ["#e67e22", "#2470c9", "#e5639a", "#7b1fa2", "#00838f", "#c62828", "#5d4037", "#1565c0", "#6d4c41"];
   var arr = [];
-  for (var i = 0; i < 9; i++) arr.push({ x: 24 + i * 44, y: 22, color: cols[i % cols.length], emoji: i === 1 ? "👵" : (i === 5 ? "👴" : null) });
-  for (var j = 0; j < 9; j++) arr.push({ x: 24 + j * 36, y: 708, color: cols[(j + 3) % cols.length], emoji: j === 4 ? "🧕" : null });
+  for (var i = 0; i < 5; i++) arr.push({ x: 30 + i * 90, y: 22, color: cols[i % cols.length], emoji: i === 1 ? "👵" : (i === 3 ? "👴" : null) });
+  for (var j = 0; j < 5; j++) arr.push({ x: 30 + j * 90, y: 708, color: cols[(j + 3) % cols.length], emoji: j === 2 ? "🧕" : null });
   return arr;
 })();
 function cheerCrowd(mood) { S.crowdT = 2.5; S.crowdMood = mood || "cheer"; }
@@ -1564,7 +1585,7 @@ function updateSpotted(dt) {
     S.spotted += rate * dt;
     if (S.spotted >= 70 && !S.chase) { S.chase = true; S.chaseLost = 0; sndSpot(); }
   } else {
-    var decay = S.char === "brave" ? 21 : (S.char === "patient" ? 28 : 14);
+    var decay = S.char === "patient" ? 28 : 14;
     S.spotted = Math.max(0, S.spotted - decay * dt);
     /* close call: the meter was dangerously high this round (>= 50) and now drained to safety */
     if (S.maxSpotted >= 50 && S.spotted < 20 && !S.closeCalled) { S.closeCalled = true; showBanner(T[S.lang].closeCall); }
@@ -2149,7 +2170,7 @@ function frame(ts) {
   rafId = requestAnimationFrame(frame);
   var dt = Math.min(0.05, (ts - lastTs) / 1000 || 0.016);
   lastTs = ts;
-  if (!S.paused) update(dt);
+  if (!S.paused) { update(dt); updateAmbient(dt); }
   render();
 }
 function startLoop() { /* one loop only: cancel any existing frame before starting */
