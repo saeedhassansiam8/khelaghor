@@ -2,7 +2,7 @@
 <html lang="bn">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>লুকোচুরি · খেলাঘর (Khelaghor)</title>
@@ -35,7 +35,7 @@
         }
       }
       * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-      html, body { height: 100%; }
+      html, body { height: 100%; overscroll-behavior: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
       body {
         margin: 0;
         font-family: "Hind Siliguri", system-ui, sans-serif;
@@ -183,12 +183,18 @@
         pointer-events: auto;
         font-family: "Baloo Da 2", "Hind Siliguri", sans-serif;
         font-weight: 800; border: none; cursor: pointer; color: #fff;
-        box-shadow: var(--shadow); touch-action: none; user-select: none; -webkit-user-select: none;
+        box-shadow: var(--shadow); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
       }
 
       #readyBtn {
         font-size: 22px; padding: 0 34px; height: 62px; border-radius: 999px;
         background: var(--green); border-bottom: 6px solid var(--green-dark);
+        animation: pulse 0.9s ease-in-out infinite alternate;
+      }
+      #dhappaBtn {
+        margin-left: auto;
+        font-size: 21px; padding: 0 26px; height: 64px; border-radius: 999px;
+        background: #e4572e; border-bottom: 6px solid #a83a17;
         animation: pulse 0.9s ease-in-out infinite alternate;
       }
       @keyframes pulse {
@@ -229,6 +235,15 @@
       .card h1 .en { display: block; font-size: 15px; letter-spacing: 4px; color: var(--ink-soft); margin-top: 4px; }
       .card h2 { font-family: "Baloo Da 2", sans-serif; font-size: 26px; margin: 2px 0 6px; }
       .card p { margin: 6px 0; font-size: 15.5px; line-height: 1.45; }
+      .new-best {
+        display: inline-block; margin: 6px 0 2px; padding: 4px 14px;
+        background: linear-gradient(90deg, #ffd83d, #ffb52e); color: #5a3a00;
+        font-weight: 800; font-size: 15px; border-radius: 999px;
+        box-shadow: 0 2px 10px rgba(232,168,18,0.5);
+        animation: pulse 0.9s ease-in-out infinite alternate;
+      }
+      .cta.challenge { background: linear-gradient(180deg, #ff7a3d, #e4572e); border-bottom: 6px solid #a83a17; }
+      .wa-link { text-decoration: none; display: inline-block; }
       .mini-note { font-size: 12.5px; color: var(--ink-soft); }
       .stat-row { display: flex; gap: 6px; margin: 10px 0 4px; }
       .stat-box { flex: 1; background: var(--card); border: 2px solid rgba(0,0,0,0.07); border-radius: 14px; padding: 7px 2px; }
@@ -310,6 +325,7 @@
         <div id="controls">
           <button class="big-btn" id="readyBtn" hidden>🙈 লুকিয়ে গেছি!</button>
           <button class="big-btn" id="checkBtn" hidden>🔍 চেক করো!</button>
+          <button class="big-btn" id="dhappaBtn" hidden>👊 ধাপ্পা!</button>
         </div>
 
         <!-- MENU -->
@@ -344,6 +360,7 @@
             <div class="stat-row">
               <div class="stat-box"><div class="n" id="statCoinsLabel">কয়েন</div><div class="v">🪙 <span id="menuCoins">০</span></div></div>
               <div class="stat-box"><div class="n" id="statBestLabel">সেরা (রাউন্ড)</div><div class="v" id="menuBest">০</div></div>
+              <div class="stat-box"><div class="n" id="statScoreLabel">সেরা স্কোর</div><div class="v">🏆 <span id="menuScore">০</span></div></div>
               <div class="stat-box"><div class="n" id="statWinsLabel">ম্যাচ জয়</div><div class="v" id="menuWins">০</div></div>
               <div class="stat-box"><div class="n" id="statRoundsLabel">রাউন্ড জয়</div><div class="v">🏆 <span id="menuRounds">০</span></div></div>
             </div>
@@ -418,10 +435,14 @@
             </div>
             <p class="mini-note" id="endCoins"></p>
             <p class="mini-note" id="endStats"></p>
+            <p class="mini-note" id="endBest"></p>
+            <p id="newBestBadge" class="new-best" hidden>🏆 নতুন রেকর্ড! (New Best!)</p>
             <p class="mini-note" id="endAch" hidden></p>
             <div class="btn-col">
               <button class="cta" id="revengeBtn" hidden>🔍 বদলা রাউন্ড — এবার তুমি খোঁজো!</button>
               <button class="cta" id="rematchBtn">🔁 রিম্যাচ · আবার এই ম্যাচ</button>
+              <button class="cta challenge" id="challengeBtn">🔥 বন্ধুকে চ্যালেঞ্জ করো</button>
+              <a class="cta ghost wa-link" id="waLink" hidden target="_blank" rel="noopener">💬 WhatsApp-এ পাঠাও</a>
               <button class="cta ghost" id="endMenuBtn">🏠 মেনুতে যাও</button>
             </div>
           </div>
@@ -445,6 +466,38 @@ try {
   if (raw) { var parsed = JSON.parse(raw); for (var k in SAVE) if (parsed[k] !== undefined) SAVE[k] = parsed[k]; }
 } catch (e) {}
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
+/* high score (best match coins) — separate key, per the Khelaghor spec */
+var HS_KEY = "khelaghor_lukochuri_highscore";
+function readHighScore() { try { var v = parseInt(localStorage.getItem(HS_KEY) || "0", 10); return isNaN(v) ? 0 : v; } catch (e) { return 0; } }
+function writeHighScore(v) { try { localStorage.setItem(HS_KEY, String(v)); } catch (e) {} }
+function challengeMessage() {
+  return "আমি খেলাঘর (Khelaghor)-এর লুকোচুরি খেলায় " + num(S.matchCoins) + " পয়েন্ট করেছি! সাহস থাকলে আমাকে হারিয়ে দেখাও 👉 " + window.location.href;
+}
+function shareChallenge() {
+  var msg = challengeMessage();
+  var wa = el("waLink");
+  wa.href = "https://wa.me/?text=" + encodeURIComponent(msg);
+  if (navigator.share) {
+    navigator.share({ text: msg }).catch(function() {});
+    return;
+  }
+  /* fallback: copy to clipboard + toast + show the WhatsApp option */
+  function copied() {
+    showBanner("✅ " + T[S.lang].challengeCopied);
+    wa.hidden = false;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(copied, function() { fallbackCopy(msg); copied(); });
+  } else { fallbackCopy(msg); copied(); }
+}
+function fallbackCopy(text) {
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta);
+  } catch (e) {}
+}
 
 /* ================= i18n ================= */
 var BN_NUM = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"];
@@ -464,6 +517,9 @@ var T = {
     readyBtn: "🙈 লুকিয়ে গেছি!",
     revengeBtn: "🔍 বদলা রাউন্ড — এবার তুমি খোঁজো!",
     checkBtn: "🔍 চেক করো!",
+    dhappaBtn: "👊 ধাপ্পা!",
+    dhappaText: "ধাপ্পা! +৩০ কয়েন",
+    dhappaBanner: "👊 ধাপ্পা! খোঁজারুকে পেছন থেকে ছুঁয়ে দিলে — খোঁজারু ২ সেকেন্ড থমকে গেল!",
     revengeStatus: function(f){ return "🔍 বদলা রাউন্ড — " + num(f) + "/৩ জনকে পেয়েছো"; },
     revengeFoundText: "১ জনকে পেলে! 🎉",
     revengeFoundSub: function(f, n){ return num(f) + "/" + num(n) + " জন ধরা পড়েছে"; },
@@ -492,13 +548,16 @@ var T = {
     endlessWinText: function(r){ return "অন্তহীন লুপে " + num(r) + " রাউন্ড বেঁচে গেছো — তুমি লুকোচুরির চ্যাম্পিয়ন!"; },
     endlessLoseText: function(r){ return "অন্তহীন লুপে " + num(r) + " রাউন্ড বেঁচে গেছো। আবার চেষ্টা করো — আরও দূর যেতে পারবে!"; },
     endCoins: function(earned, total, best){ return "এই ম্যাচে কয়েন: 🪙 +" + num(earned) + " · মোট ব্যালেন্স: 🪙 " + num(total) + " · সেরা: " + num(best) + " রাউন্ড"; },
+    endBest: function(s){ return "🏆 সেরা স্কোর: " + num(s) + " পয়েন্ট"; },
+    challengeBtn: "🔥 বন্ধুকে চ্যালেঞ্জ করো",
+    challengeCopied: "চ্যালেঞ্জ মেসেজ কপি হয়েছে! এখন মেসেঞ্জার বা হোয়াটসঅ্যাপে পেস্ট করো",
     endStats: function(w, m, rw){ return "মোট ম্যাচ জয়: " + num(w) + " · মোট ম্যাচ: " + num(m) + " · মোট রাউন্ড জয়: " + num(rw); },
     startBtn: "খেলা শুরু ▶",
     backBtn: "🏠 খেলাঘর · মেনু",
     menuIntro: "গ্রামের উঠোনে লুকোচুরি! তুমি লুকাবে, আর খোঁজার লোকটা তোমাকে খুঁজবে। ভালো জায়গায় চুপচাপ লুকিয়ে থাকলে জিতবে — নড়াচড়া করলেই ধরা!",
     menuNote: "৫ রাউন্ডের ম্যাচ · ৩টি জীবন · কয়েন আর সেরা স্কোর এই ডিভাইসে সেভ থাকে",
     menuNoteEndless: "অন্তহীন লুপ · ৩টি জীবন · রাউন্ড যত বাড়বে খোঁজারু তত দ্রুত হবে · কয়েন আর সেরা স্কোর এই ডিভাইসে সেভ থাকে",
-    statCoins: "কয়েন", statBest: "সেরা (রাউন্ড)", statWins: "ম্যাচ জয়", statRounds: "রাউন্ড জয়",
+    statCoins: "কয়েন", statBest: "সেরা (রাউন্ড)", statScore: "সেরা স্কোর", statWins: "ম্যাচ জয়", statRounds: "রাউন্ড জয়",
     diffLabel: "কঠিনতা বেছে নাও",
     modeLabel: "খেলার ধরন",
     modeNames: { normal: "সাধারণ", endless: "অন্তহীন" },
@@ -546,6 +605,9 @@ var T = {
     readyBtn: "🙈 I'm hidden!",
     revengeBtn: "🔍 Revenge Round — now YOU search!",
     checkBtn: "🔍 Check!",
+    dhappaBtn: "👊 Dhappa!",
+    dhappaText: "Dhappa! +30 coins",
+    dhappaBanner: "👊 Dhappa! You tagged the seeker from behind — seeker stunned for 2s!",
     revengeStatus: function(f){ return "🔍 Revenge Round — found " + f + "/3"; },
     revengeFoundText: "Found one! 🎉",
     revengeFoundSub: function(f, n){ return f + "/" + n + " caught"; },
@@ -574,13 +636,16 @@ var T = {
     endlessWinText: function(r){ return "You survived " + r + " rounds in the endless loop — champion of hide and seek!"; },
     endlessLoseText: function(r){ return "You survived " + r + " rounds in the endless loop. Try again — you can go further!"; },
     endCoins: function(earned, total, best){ return "Coins this match: 🪙 +" + earned + " · Balance: 🪙 " + total + " · Best: " + best + " rounds"; },
+    endBest: function(s){ return "🏆 Best Score: " + s + " points"; },
+    challengeBtn: "🔥 Challenge a Friend",
+    challengeCopied: "Challenge message copied! Now paste it in Messenger or WhatsApp",
     endStats: function(w, m, rw){ return "Matches won: " + w + " · Matches played: " + m + " · Rounds won: " + rw; },
     startBtn: "Start Playing ▶",
     backBtn: "🏠 Khelaghor · Menu",
     menuIntro: "Hide-and-seek in the village courtyard! You hide, the seeker searches. Stay quiet in a good spot to win — move in front of their eyes and you're caught!",
     menuNote: "5-round match · 3 lives · Coins and best score save on this device",
     menuNoteEndless: "Endless loop · 3 lives · the seeker gets faster every round · Coins and best score save on this device",
-    statCoins: "Coins", statBest: "Best (Rounds)", statWins: "Matches Won", statRounds: "Rounds Won",
+    statCoins: "Coins", statBest: "Best (Rounds)", statScore: "Best Score", statWins: "Matches Won", statRounds: "Rounds Won",
     diffLabel: "Choose difficulty",
     modeLabel: "Game mode",
     modeNames: { normal: "Normal", endless: "Endless" },
@@ -704,6 +769,8 @@ var S = {
   player: { x: 210, y: 560, vx: 0, vy: 0, moving: false, face: -Math.PI / 2 },
   seeker: { x: COUNT_SPOT.x, y: COUNT_SPOT.y, face: -Math.PI / 2, wp: 0, wait: 0, checking: null, checkT: 0, scanA: 0 },
   checkTimer: 0, keys: {}, bob: 0,
+  dhappaUsed: false, seekerStun: 0, shake: 0, particles: [], popups: [],
+  stepAcc: 0, steps: 0, dustAcc: 0, heartAcc: 0, heartbeats: 0,
   _timerSec: -1
 };
 function diffCfg() { return DIFFS[S.diff]; }
@@ -749,6 +816,23 @@ function tone(freq, dur, type, vol, when, slideTo) {
     o.start(t0); o.stop(t0 + dur + 0.05);
   } catch (e) {}
 }
+function noiseBurst(dur, vol, when, freqFrom, freqTo) {
+  if (!S.sound || !AC) return;
+  try {
+    var t = AC.currentTime + (when || 0);
+    var len = Math.max(1, Math.floor(AC.sampleRate * dur));
+    var buf = AC.createBuffer(1, len, AC.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    var src = AC.createBufferSource(); src.buffer = buf;
+    var f = AC.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 0.9;
+    f.frequency.setValueAtTime(freqFrom || 900, t);
+    if (freqTo) f.frequency.exponentialRampToValueAtTime(freqTo, t + dur);
+    var g = AC.createGain(); g.gain.value = vol || 0.12;
+    src.connect(f); f.connect(g); g.connect(AC.destination);
+    src.start(t); src.stop(t + dur + 0.05);
+  } catch (e) {}
+}
 function sndClick() { tone(700, 0.07, "triangle", 0.10); }
 function sndWhistle() { tone(2250, 0.10, "square", 0.05); tone(2250, 0.16, "square", 0.05, 0.13); }
 function sndCoin() { tone(1318, 0.09, "sine", 0.13); tone(1760, 0.16, "sine", 0.13, 0.07); }
@@ -758,6 +842,9 @@ function sndSpot() { tone(880, 0.08, "square", 0.06); }
 function sndTick() { tone(1200, 0.05, "square", 0.05); }
 function sndPower() { tone(880, 0.08, "sine", 0.12); tone(1174, 0.08, "sine", 0.12, 0.06); tone(1568, 0.14, "sine", 0.12, 0.12); }
 function sndAch() { [523, 659, 784, 1046].forEach(function(f, i){ tone(f, 0.12, "triangle", 0.12, i * 0.08); }); }
+function sndStep() { S.stepAlt = !S.stepAlt; noiseBurst(0.05, S.stepAlt ? 0.05 : 0.038, 0, S.stepAlt ? 480 : 380, 220); }
+function sndHeart() { tone(58, 0.12, "sine", 0.22); tone(50, 0.14, "sine", 0.18, 0.16); S.heartbeats++; }
+function sndWhoosh() { noiseBurst(0.18, 0.12, 0, 700, 2600); }
 
 /* ================= canvas + view ================= */
 var canvas = document.getElementById("game");
@@ -917,6 +1004,56 @@ function drawPowerups() {
     ctx.restore();
   }
 }
+/* floating popups (rise + fade) + particle bursts — cleared on every round start */
+function addPopup(x, y, text, color) {
+  S.popups.push({ x: x, y: y, text: text, color: color || "#ffffff", life: 1 });
+  if (S.popups.length > 12) S.popups.shift();
+}
+function burst(x, y, n, color) {
+  for (var i = 0; i < (n || 12); i++) {
+    var a = Math.random() * Math.PI * 2, sp = 40 + Math.random() * 110;
+    S.particles.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, life: 0.6 + Math.random() * 0.6, max: 1.2, color: color || "#ffd83d", r: 2 + Math.random() * 3 });
+  }
+  if (S.particles.length > 160) S.particles.splice(0, S.particles.length - 160);
+}
+function spawnDust(x, y) {
+  S.particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 14, vy: -8 - Math.random() * 10, life: 0.5, max: 0.5, color: "rgba(210,180,140,0.55)", r: 2.5 + Math.random() * 2 });
+  if (S.particles.length > 160) S.particles.splice(0, S.particles.length - 160);
+}
+function updateFx(dt) {
+  var i;
+  for (i = S.particles.length - 1; i >= 0; i--) {
+    var pt = S.particles[i];
+    pt.life -= dt; pt.x += pt.vx * dt; pt.y += pt.vy * dt; pt.vy += 60 * dt;
+    if (pt.life <= 0) S.particles.splice(i, 1);
+  }
+  for (i = S.popups.length - 1; i >= 0; i--) {
+    var pp = S.popups[i];
+    pp.life -= dt * 0.8; pp.y -= 26 * dt;
+    if (pp.life <= 0) S.popups.splice(i, 1);
+  }
+  if (S.shake > 0) S.shake = Math.max(0, S.shake - dt * 22);
+}
+function drawFx() {
+  var i;
+  for (i = 0; i < S.particles.length; i++) {
+    var pt = S.particles[i];
+    ctx.globalAlpha = Math.max(0, Math.min(1, pt.life / pt.max));
+    ctx.fillStyle = pt.color;
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "center"; ctx.font = "800 19px \"Baloo Da 2\", \"Hind Siliguri\", sans-serif";
+  for (i = 0; i < S.popups.length; i++) {
+    var pp = S.popups[i];
+    ctx.globalAlpha = Math.max(0, Math.min(1, pp.life));
+    ctx.lineWidth = 4; ctx.strokeStyle = "rgba(20,40,20,0.7)";
+    ctx.strokeText(pp.text, pp.x, pp.y);
+    ctx.fillStyle = pp.color;
+    ctx.fillText(pp.text, pp.x, pp.y);
+  }
+  ctx.globalAlpha = 1;
+}
 function drawPlayer() {
   if (S.state === "revenge") return; /* the player IS the seeker in a revenge round */
   var p = S.player;
@@ -926,6 +1063,10 @@ function drawPlayer() {
   /* shadow */
   ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.beginPath(); ctx.ellipse(0, 12 - bobY, 13, 5, 0, 0, Math.PI * 2); ctx.fill();
+  /* squash-and-stretch while running: tall at the top of the bounce, squat at the bottom */
+  var stretch = p.moving ? 1 + Math.sin(S.bob * 10) * 0.08 : 1;
+  ctx.save();
+  ctx.scale(1 / Math.sqrt(stretch), stretch);
   /* body (character colour) */
   ctx.fillStyle = (CHARS[S.char] || CHARS.roni).color;
   ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
@@ -940,6 +1081,7 @@ function drawPlayer() {
     ctx.font = "16px sans-serif"; ctx.textAlign = "center";
     ctx.fillText((CHARS[S.char] || CHARS.roni).emoji, 0, -26);
   }
+  ctx.restore(); /* end squash-and-stretch */
   ctx.restore();
   /* hidden / spotted indicators */
   var sp = spotAt(p.x, p.y);
@@ -1041,6 +1183,7 @@ function render() {
   ctx.save();
   ctx.translate(view.ox * view.dpr / view.dpr, view.oy * view.dpr / view.dpr);
   ctx.scale(view.s, view.s);
+  if (S.shake > 0.2) ctx.translate((Math.random() - 0.5) * S.shake, (Math.random() - 0.5) * S.shake);
   /* letterbox background */
   ctx.fillStyle = "#2c5e2e";
   ctx.fillRect(-view.ox / view.s - 10, -view.oy / view.s - 10, VW + view.ox / view.s * 2 + 20, VH + view.oy / view.s * 2 + 20);
@@ -1050,6 +1193,7 @@ function render() {
   drawKids();
   drawRevengeHiders();
   drawPlayer();
+  drawFx();
   ctx.restore();
 }
 
@@ -1104,6 +1248,7 @@ window.addEventListener("keyup", function(e) { S.keys[e.key.toLowerCase()] = fal
 window.addEventListener("blur", function() { S.keys = {}; });
 document.addEventListener("visibilitychange", function() {
   if (document.hidden) { S.keys = {}; if (!S.paused && (S.state === "hide" || S.state === "seek" || S.state === "revenge")) togglePause(true); }
+  else { lastTs = 0; } /* reset the frame timer so a tab-switch never teleports anyone */
 });
 
 /* ================= dom refs + helpers ================= */
@@ -1168,6 +1313,11 @@ function updatePlayer(dt, who) {
     p.x = c.x; p.y = c.y;
     if (Math.hypot(p.vx, p.vy) > 12) p.face = Math.atan2(p.vy, p.vx);
     S.bob += dt;
+    /* footsteps: a soft tap every ~52px of travel, dust puff behind the feet */
+    S.stepAcc += Math.hypot(p.vx, p.vy) * dt;
+    if (S.stepAcc > 52) { S.stepAcc = 0; sndStep(); S.steps++; }
+    S.dustAcc += dt;
+    if (S.dustAcc > 0.14) { S.dustAcc = 0; spawnDust(p.x, p.y + 11); }
   }
   collectPowerups();
 }
@@ -1183,7 +1333,30 @@ function seekerSeesPlayer() {
   var ang = Math.atan2(dy, dx);
   return Math.abs(angDiff(ang, k.face)) <= cfg.fov / 2;
 }
+/* ধাপ্পা: খোঁজারুর পেছনে (ভিশন কোনের বাইরে) গিয়ে ছুঁয়ে দাও — এক রাউন্ডে একবার */
+function canDhappa() {
+  if (S.state !== "seek" || S.paused || S.dhappaUsed) return false;
+  var cfg = seekerCfg(), k = S.seeker, p = S.player;
+  var dx = p.x - k.x, dy = p.y - k.y;
+  var d = Math.hypot(dx, dy);
+  if (d > 36 || d < 8) return false;
+  var ang = Math.atan2(dy, dx);
+  return Math.abs(angDiff(ang, k.face)) > cfg.fov / 2;
+}
+function tryDhappa() {
+  if (!canDhappa()) return;
+  S.dhappaUsed = true;
+  S.matchCoins += 30; SAVE.coins += 30; persist();
+  S.seekerStun = 2; S.spotted = 0; S.chase = false;
+  sndWhoosh(); sndCoin();
+  addPopup(S.player.x, S.player.y - 34, T[S.lang].dhappaText, "#ffd83d");
+  showBanner(T[S.lang].dhappaBanner);
+  burst(S.player.x, S.player.y, 14, "#ffd83d");
+  S.shake = 7;
+  el("dhappaBtn").hidden = true;
+}
 function updateSeeker(dt) {
+  if (S.seekerStun > 0) { S.seekerStun = Math.max(0, S.seekerStun - dt); return; } /* ধাপ্পা stun: frozen */
   var cfg = seekerCfg(), k = S.seeker, p = S.player;
   var speed = cfg.seekSpd;
   var target = null, arrive = 10;
@@ -1462,6 +1635,8 @@ function collectPowerups() {
 var _lastTickSec = -1;
 function update(dt) {
   S.bob += dt * 0.4;
+  updateFx(dt);
+  if (S.state !== "seek") el("dhappaBtn").hidden = true;
   if (S.crowdT > 0) S.crowdT = Math.max(0, S.crowdT - dt);
   if (S.state === "hide") {
     updatePlayer(dt);
@@ -1480,6 +1655,15 @@ function update(dt) {
     updateKids(dt, "seek");
     updateSpotted(dt);
     if (S.state !== "seek") return;
+    /* ধাপ্পা button: only when the player is behind the seeker, close enough */
+    el("dhappaBtn").hidden = !canDhappa();
+    /* heartbeat: faster the closer the seeker gets (danger < 120px) */
+    var sd = Math.hypot(S.seeker.x - S.player.x, S.seeker.y - S.player.y);
+    if (sd < 120 && !S.paused) {
+      S.heartAcc += dt;
+      var interval = 0.32 + (sd / 120) * 0.55;
+      if (S.heartAcc >= interval) { S.heartAcc = 0; sndHeart(); }
+    } else { S.heartAcc = 0; }
     S.seekTime -= dt;
     if (S.seekTime <= 0) { winRound(); }
   } else if (S.state === "revenge") {
@@ -1592,6 +1776,8 @@ function setupRound() {
   S.player.x = 210; S.player.y = 560; S.player.face = -Math.PI / 2; S.player.moving = false; S.player.vx = 0; S.player.vy = 0;
   S.seeker = { x: COUNT_SPOT.x, y: COUNT_SPOT.y, face: -Math.PI / 2, wp: 0, wait: 0, checking: null, checkT: 0, scanA: 0 };
   S.spotted = 0; S.maxSpotted = 0; S.chase = false; S.chaseLost = 0; S.closeCalled = false;
+  S.dhappaUsed = false; S.seekerStun = 0; S.shake = 0; S.particles.length = 0; S.popups.length = 0;
+  S.stepAcc = 0; S.dustAcc = 0; S.heartAcc = 0;
   S.checkTimer = diffCfg().checkEvery;
   S.hideTime = diffCfg().hideTime;
   S.powerups = []; S.fx = { ghost: 0, speed: 0, silent: 0 }; S.fxSpawned = false;
@@ -1734,6 +1920,8 @@ function endMatch() {
   if (!S.matchCounted) { SAVE.matches++; S.matchCounted = true; } /* one match counts once, even if a revenge round continues it */
   SAVE.best = Math.max(SAVE.best, S.roundsSurvived);
   SAVE.bestStreak = Math.max(SAVE.bestStreak || 0, S.perfectStreak);
+  var hs = readHighScore(), isNewBest = S.matchCoins > hs;
+  if (isNewBest) writeHighScore(S.matchCoins);
   if (won && S.diff === "hard") unlockAch("hard_win");
   if (S.mode !== "endless" && S.roundsSurvived === TOTAL_ROUNDS) unlockAch("survivor5");
   if (SAVE.coins >= 100) unlockAch("rich100");
@@ -1748,6 +1936,9 @@ function endMatch() {
   el("fsLives").textContent = num(Math.max(0, S.lives));
   el("endCoins").textContent = t.endCoins(S.matchCoins, SAVE.coins, SAVE.best);
   el("endStats").textContent = t.endStats(SAVE.wins, SAVE.matches, SAVE.roundsWon);
+  el("endBest").textContent = t.endBest(isNewBest ? S.matchCoins : hs);
+  el("newBestBadge").hidden = !isNewBest;
+  el("waLink").hidden = true;
   var ea = el("endAch");
   if (S.newAch.length) {
     var names = S.newAch.map(function(id) { for (var i = 0; i < ACH.length; i++) if (ACH[i].id === id) return achName(ACH[i]); return id; });
@@ -1813,7 +2004,7 @@ function countUp(el, target) {
 }
 function refreshMenuStats() {
   var show = !el("menuOverlay").hidden;
-  var pairs = [["menuCoins", SAVE.coins], ["menuBest", SAVE.best], ["menuWins", SAVE.wins], ["menuRounds", SAVE.roundsWon]];
+  var pairs = [["menuCoins", SAVE.coins], ["menuBest", SAVE.best], ["menuScore", readHighScore()], ["menuWins", SAVE.wins], ["menuRounds", SAVE.roundsWon]];
   pairs.forEach(function(pr) { if (show) countUp(el(pr[0]), pr[1]); else el(pr[0]).textContent = num(pr[1]); });
   renderAchievements();
   el("streakLine").textContent = T[S.lang].streakLine(SAVE.bestStreak || 0);
@@ -1827,6 +2018,7 @@ function applyLang() {
   el("menuNote").textContent = S.mode === "endless" ? t.menuNoteEndless : t.menuNote;
   el("statCoinsLabel").textContent = t.statCoins;
   el("statBestLabel").textContent = t.statBest;
+  el("statScoreLabel").textContent = t.statScore;
   el("statWinsLabel").textContent = t.statWins;
   el("statRoundsLabel").textContent = t.statRounds;
   el("diffLabel").textContent = t.diffLabel;
@@ -1853,6 +2045,7 @@ function applyLang() {
   el("roundNextBtn").textContent = t.nextRound;
   el("roundMenuBtn").textContent = t.quit;
   el("rematchBtn").textContent = t.rematch;
+  el("challengeBtn").textContent = t.challengeBtn;
   el("revengeBtn").textContent = t.revengeBtn;
   el("endMenuBtn").textContent = t.quit;
   el("livesLabel").textContent = t.lives;
@@ -1861,6 +2054,7 @@ function applyLang() {
   el("fsLivesLabel").textContent = t.livesLabel;
   el("readyBtn").textContent = t.readyBtn;
   el("checkBtn").textContent = t.checkBtn;
+  el("dhappaBtn").textContent = t.dhappaBtn;
   el("langBtn").textContent = S.lang === "bn" ? "EN" : "বাং";
   var rules = el("rulesList");
   rules.innerHTML = "";
@@ -1890,10 +2084,12 @@ el("startBtn").addEventListener("click", function() { ensureAudio(); sndClick();
 el("backBtn").addEventListener("click", function() { sndClick(); window.location.href = "index.html"; });
 el("readyBtn").addEventListener("click", function() { ensureAudio(); sndClick(); startSeek(); });
 el("checkBtn").addEventListener("click", function() { ensureAudio(); sndClick(); checkRevengeSpot(); });
+el("dhappaBtn").addEventListener("click", function() { ensureAudio(); tryDhappa(); });
 el("revengeBtn").addEventListener("click", function() { sndClick(); startRevenge(); });
 el("roundNextBtn").addEventListener("click", function() { sndClick(); nextRound(); });
 el("roundMenuBtn").addEventListener("click", function() { sndClick(); quitToMenu(); });
 el("rematchBtn").addEventListener("click", function() { sndClick(); startMatch(); });
+el("challengeBtn").addEventListener("click", function() { ensureAudio(); sndClick(); shareChallenge(); });
 el("endMenuBtn").addEventListener("click", function() { sndClick(); quitToMenu(); });
 el("resumeBtn").addEventListener("click", function() { sndClick(); togglePause(false); });
 el("restartBtn").addEventListener("click", function() { sndClick(); startMatch(); });
@@ -1948,20 +2144,24 @@ el("playerName").addEventListener("change", function() {
 });
 
 /* ================= main loop + init ================= */
-var lastTs = 0;
+var lastTs = 0, rafId = 0;
 function frame(ts) {
-  requestAnimationFrame(frame);
+  rafId = requestAnimationFrame(frame);
   var dt = Math.min(0.05, (ts - lastTs) / 1000 || 0.016);
   lastTs = ts;
   if (!S.paused) update(dt);
   render();
+}
+function startLoop() { /* one loop only: cancel any existing frame before starting */
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(function(ts) { lastTs = ts; rafId = requestAnimationFrame(frame); });
 }
 el("soundBtn").textContent = S.sound ? "🔊" : "🔇";
 resize();
 applyLang();
 refreshMenuStats();
 updateHUD();
-requestAnimationFrame(function(ts) { lastTs = ts; requestAnimationFrame(frame); });
+startLoop();
 </script>
 </body>
 </html>

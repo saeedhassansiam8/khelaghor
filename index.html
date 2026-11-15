@@ -2,8 +2,20 @@
 <html lang="bn">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="description" content="খেলাঘর — ছোটবেলার খেলা, এখন ফোনে। গোল্লাছুট আর লুকোচুরি খেলো, কয়েন জমাও, দোকান থেকে কিনো।" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="খেলাঘর - Khelaghor" />
+  <meta property="og:url" content="https://saeedhassansiam8.github.io/khelaghor/" />
+  <meta property="og:title" content="খেলাঘর (Khelaghor) — ছোটবেলার দেশি খেলা এখন মোবাইলেই!" />
+  <meta property="og:description" content="গোল্লাছুট ও লুকোচুরি খেলো কোনো অ্যাপ ডাউনলোড ছাড়াই! বন্ধুদের চ্যালেঞ্জ করো আর হাই-স্কোর গড়ো।" />
+  <meta property="og:image" content="https://saeedhassansiam8.github.io/khelaghor/preview.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="খেলাঘর (Khelaghor) — ছোটবেলার দেশি খেলা এখন মোবাইলেই!" />
+  <meta name="twitter:description" content="গোল্লাছুট ও লুকোচুরি খেলো কোনো অ্যাপ ডাউনলোড ছাড়াই! বন্ধুদের চ্যালেঞ্জ করো আর হাই-স্কোর গড়ো।" />
+  <meta name="twitter:image" content="https://saeedhassansiam8.github.io/khelaghor/preview.png" />
   <title>খেলাঘর · Khelaghor — গোল্লাছুট ও লুকোচুরি</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,6 +35,8 @@
     .game-wrap { background:#fff; border-radius:20px; box-shadow:0 10px 30px rgba(20,50,25,.18); overflow:hidden; }
     .game-wrap iframe { display:block; width:100%; height:760px; border:0; background:#7fbf5a; }
     .note { text-align:center; font-size:13.5px; color:#6b7a5e; margin:10px 0 0; }
+    .best-line { text-align:center; font-size:14.5px; font-weight:700; color:#14663a; margin:6px 0 0; }
+    .soon .bs { font-size:12.5px; color:#14663a; font-weight:700; margin-top:3px; }
     h2 { font-family:"Baloo Da 2",cursive; font-size:26px; color:var(--green-d); margin:26px 0 8px; text-align:center; }
     .howto { background:#fff; border-radius:16px; padding:6px 18px 14px; box-shadow:0 4px 16px rgba(20,50,25,.10); }
     .howto li { margin:9px 0; line-height:1.55; }
@@ -82,10 +96,11 @@
       <iframe id="gameFrame" src="game.html" title="গোল্লাছুট — Gollachut" allow="autoplay; fullscreen" loading="eager"></iframe>
     </div>
     <p class="note">💡 কয়েন, সেরা স্কোর আর কেনা জিনিস এই ডিভাইসে সেভ থাকে। · Coins and best score save on this device.</p>
+    <p class="best-line">⚽ গোল্লাছুট — 🏆 সেরা স্কোর: <span id="ghBest">০</span> পয়েন্ট</p>
 
     <h2>আরও খেলা</h2>
     <div class="soon">
-      <a class="card live" href="lukochuri.html"><div class="emo">🙈</div><div class="nm">লুকোচুরি</div><div class="st">▶ খেলো এখনই</div></a>
+      <a class="card live" href="lukochuri.html"><div class="emo">🙈</div><div class="nm">লুকোচুরি</div><div class="st">▶ খেলো এখনই</div><div class="bs">🏆 সেরা স্কোর: <span id="lkBest">০</span></div></a>
       <div class="card soon-card"><div class="emo">🙈</div><div class="nm">কানামাছি</div><div class="st">শীঘ্রই আসছে</div></div>
       <div class="card soon-card"><div class="emo">🪁</div><div class="nm">ঘুড়ি</div><div class="st">শীঘ্রই আসছে</div></div>
     </div>
@@ -181,6 +196,20 @@
   function ownedBadge(n) {
     return n > 0 ? ' <span class="owned-badge">✓ আছে: ' + num(n) + 'টি</span>' : "";
   }
+  /* best scores on the game selection screen — high-score keys, falling back to each save's best */
+  var GH_HS = "khelaghor_gollachut_highscore", LK_HS = "khelaghor_lukochuri_highscore";
+  function readBest(hsKey, saveKey) {
+    try { var v = parseInt(localStorage.getItem(hsKey) || "", 10); if (!isNaN(v)) return v; } catch (e) {}
+    var s = readSave(saveKey); return s.best | 0;
+  }
+  function refreshBest() {
+    var gh = document.getElementById("ghBest"), lk = document.getElementById("lkBest");
+    if (gh) gh.textContent = num(readBest(GH_HS, GH_KEY));
+    if (lk) lk.textContent = num(readBest(LK_HS, LK_KEY));
+  }
+  refreshBest();
+  setInterval(refreshBest, 2000); /* the embedded Gollachut game updates the score live */
+  document.addEventListener("visibilitychange", function() { if (!document.hidden) refreshBest(); });
   function renderShop() {
     var isGH = activeGame === "gollachut";
     var key = isGH ? GH_KEY : LK_KEY;
