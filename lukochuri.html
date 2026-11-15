@@ -436,7 +436,8 @@ var SAVE_KEY = "lukochuri_save_v1";
 var SAVE = {
   coins: 0, best: 0, wins: 0, matches: 0, roundsWon: 0,
   lang: "bn", sound: true, diff: "medium", mode: "normal",
-  name: "খেলোয়াড়", char: "roni", ach: [], bestStreak: 0
+  name: "খেলোয়াড়", char: "roni", ach: [], bestStreak: 0,
+  extraLives: 0, ghostStarts: 0, speedStarts: 0 /* home-page shop boosts */
 };
 try {
   var raw = localStorage.getItem(SAVE_KEY);
@@ -767,8 +768,8 @@ function toVirtual(cx, cy) {
 
 /* ================= rendering: village courtyard ================= */
 function drawField() {
-  /* grass */
-  ctx.fillStyle = "#57b34a";
+  /* grass — warm village green */
+  ctx.fillStyle = "#4da344";
   ctx.fillRect(0, 0, VW, VH);
   ctx.fillStyle = "rgba(255,255,255,0.04)";
   for (var i = 0; i < 28; i++) {
@@ -781,20 +782,25 @@ function drawField() {
   ctx.moveTo(210, 720); ctx.quadraticCurveTo(200, 520, 210, 330); ctx.quadraticCurveTo(215, 200, 210, 60); ctx.stroke();
   ctx.lineWidth = 18; ctx.beginPath();
   ctx.moveTo(40, 440); ctx.quadraticCurveTo(150, 420, 300, 440); ctx.quadraticCurveTo(370, 450, 400, 430); ctx.stroke();
+  /* dirt circle at the counting spot — the seeker counts here, facing the wall */
+  ctx.fillStyle = "#e8d5a8";
+  ctx.beginPath(); ctx.arc(COUNT_SPOT.x, COUNT_SPOT.y, 30, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#c9a86a"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(COUNT_SPOT.x, COUNT_SPOT.y, 30, 0, Math.PI * 2); ctx.stroke();
   /* pond (bottom-left) */
-  ctx.fillStyle = "#4db2e8";
+  ctx.fillStyle = "#5fb3d9";
   ctx.beginPath(); ctx.ellipse(58, 648, 66, 42, -0.3, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "rgba(255,255,255,0.35)";
   ctx.beginPath(); ctx.ellipse(40, 636, 26, 10, -0.3, 0, Math.PI * 2); ctx.fill();
   /* paddy patch (bottom-right corner) */
-  ctx.fillStyle = "#7fbf3f";
+  ctx.fillStyle = "#8fbf45";
   ctx.fillRect(330, 640, 90, 80);
-  ctx.strokeStyle = "#5da32e"; ctx.lineWidth = 2;
+  ctx.strokeStyle = "#6da83a"; ctx.lineWidth = 2;
   for (var py = 652; py < 716; py += 12) { ctx.beginPath(); ctx.moveTo(334, py); ctx.lineTo(416, py); ctx.stroke(); }
   /* paddy field spot (new hiding spot) */
-  ctx.fillStyle = "#7fbf3f";
+  ctx.fillStyle = "#8fbf45";
   ctx.fillRect(118, 478, 84, 84);
-  ctx.strokeStyle = "#5da32e"; ctx.lineWidth = 2;
+  ctx.strokeStyle = "#6da83a"; ctx.lineWidth = 2;
   for (var py = 490; py < 556; py += 12) { ctx.beginPath(); ctx.moveTo(122, py); ctx.lineTo(198, py); ctx.stroke(); }
   /* houses */
   drawHouse(30, 96, 96, 74, "#f3e2c7", "#c0392b");
@@ -853,12 +859,14 @@ function drawHouse(x, y, w, h, wall, roof) {
   ctx.fillRect(x + w - 26, y + 30, 16, 14);
 }
 function drawTree(x, y, r) {
-  ctx.fillStyle = "#6d4c41";
+  ctx.fillStyle = "#7a4a21";
   ctx.fillRect(x - 5, y - 6, 10, r + 8);
   ctx.fillStyle = "#2e7d32";
   ctx.beginPath(); ctx.arc(x, y - 14, r, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#388e3c";
   ctx.beginPath(); ctx.arc(x - r * 0.45, y - 6, r * 0.6, 0, Math.PI * 2); ctx.arc(x + r * 0.45, y - 6, r * 0.6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#4da344";
+  ctx.beginPath(); ctx.arc(x, y - 14 - r * 0.45, r * 0.42, 0, Math.PI * 2); ctx.fill();
 }
 function drawBush(x, y, r) {
   ctx.fillStyle = "#33691e";
@@ -1372,6 +1380,12 @@ function startMatch() {
   S.round = 1; S.lives = 3; S.roundsSurvived = 0; S.matchCoins = 0;
   S.perfectCount = 0; S.perfectStreak = 0; S.roundResults = []; S.newAch = [];
   S.revengeUsed = false; S.matchCounted = false;
+  /* home-page shop boosts: extra life + round-1 ghost/speed start */
+  S.startGhost = false; S.startSpeed = false;
+  if (SAVE.extraLives > 0) { SAVE.extraLives--; S.lives = 4; }
+  if (SAVE.ghostStarts > 0) { SAVE.ghostStarts--; S.startGhost = true; }
+  if (SAVE.speedStarts > 0) { SAVE.speedStarts--; S.startSpeed = true; }
+  if (S.lives > 3 || S.startGhost || S.startSpeed) persist();
   hideAllOverlays();
   setupRound();
 }
@@ -1382,6 +1396,7 @@ function setupRound() {
   S.checkTimer = diffCfg().checkEvery;
   S.hideTime = diffCfg().hideTime;
   S.powerups = []; S.fx = { ghost: 0, speed: 0, silent: 0 }; S.fxSpawned = false;
+  if (S.round === 1) { if (S.startGhost) S.fx.ghost = 10; if (S.startSpeed) S.fx.speed = 10; }
   S.state = "hide"; S.paused = false;
   joyHide();
   el("readyBtn").hidden = false;

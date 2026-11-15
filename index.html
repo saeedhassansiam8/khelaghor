@@ -9,12 +9,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@500;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    :root { --green:#1e8a49; --green-d:#14663a; --cream:#fffdf4; --ink:#22301f; --gold:#ffd83d; --red:#e4572e; }
+    :root { --green:#1e8a49; --green-d:#14663a; --cream:#fffdf4; --ink:#22301f; --gold:#ffd83d; --gold-d:#e8a812; --red:#e4572e; }
     * { box-sizing:border-box; }
     body { margin:0; font-family:"Hind Siliguri",system-ui,sans-serif; background:linear-gradient(180deg,#eaf7e4 0%,#fffdf4 55%,#ffeec2 100%); color:var(--ink); }
     header { text-align:center; padding:26px 16px 10px; }
     .logo { font-family:"Baloo Da 2",cursive; font-size:52px; font-weight:800; line-height:1; color:var(--green); text-shadow:0 3px 0 rgba(30,138,73,.18); }
     .logo small { display:block; font-size:15px; letter-spacing:6px; color:#6b7a5e; font-weight:700; margin-top:4px; }
+    .logo-rule { width:120px; height:5px; border-radius:99px; background:linear-gradient(90deg,var(--gold),var(--gold-d)); margin:12px auto 0; }
     .tagline { margin:10px auto 0; max-width:520px; font-size:17px; color:#4c5b45; }
     #announceBar { display:block; max-width:560px; margin:14px auto 0; background:var(--gold); border-radius:999px; padding:8px 16px; font-weight:700; font-size:15px; }
     #announceBar[hidden] { display:none; }
@@ -36,6 +37,28 @@
     .soon .card.live .st { color:var(--green-d); }
     .soon .card.soon-card { opacity:.72; }
     .soon a.card { text-decoration: none; color: inherit; display: block; }
+    /* ---- unified shop (both games) ---- */
+    .shop-wrap { background:#fff; border-radius:20px; box-shadow:0 10px 30px rgba(20,50,25,.14); padding:16px 14px 18px; }
+    .shop-tabs { display:flex; gap:8px; justify-content:center; margin:2px 0 10px; }
+    .shop-tab { font-family:"Baloo Da 2",cursive; font-weight:800; font-size:16px; border:2px solid #d8cfae; background:#fffdf4; color:#5c6b52; border-radius:999px; padding:8px 18px; cursor:pointer; }
+    .shop-tab.on { background:var(--gold); border-color:var(--gold-d); color:#4a2f00; }
+    .shop-balance { text-align:center; font-family:"Baloo Da 2",cursive; font-weight:800; font-size:20px; margin:4px 0 8px; }
+    .shop-sec { text-align:left; font-family:"Baloo Da 2",cursive; font-weight:800; font-size:17px; margin:14px 2px 6px; color:var(--green-d); }
+    .shop-item { display:flex; align-items:center; gap:10px; background:#fffdf4; border:1px solid #eadfbe; border-radius:14px; padding:9px 10px; margin:7px 0; }
+    .shop-item .sw { width:42px; height:42px; border-radius:50%; flex:none; border:3px solid rgba(0,0,0,.15); display:flex; align-items:center; justify-content:center; font-size:20px; }
+    .shop-item .info { flex:1; min-width:0; }
+    .shop-item .nm { font-weight:700; font-size:15px; overflow-wrap:break-word; }
+    .shop-item .ds { font-size:12.5px; color:#6b7a5e; line-height:1.35; overflow-wrap:break-word; }
+    .shop-item .buy { flex:none; min-width:86px; font-family:"Baloo Da 2",cursive; font-weight:800; font-size:15px; background:var(--gold); border:0; border-bottom:3px solid var(--gold-d); border-radius:12px; padding:8px 10px; cursor:pointer; color:#4a2f00; }
+    .shop-item .buy:active { transform:scale(.95); }
+    .shop-item .buy:disabled { background:#cfcfcf; color:#666; border-bottom-color:#a8a8a8; cursor:default; }
+    .shop-item .buy.equip { background:var(--green); color:#fff; border-bottom-color:var(--green-d); }
+    .shop-item .buy.equipped { background:#fff; color:var(--green-d); border:2px solid var(--green); }
+    .shop-item .owned-badge { color:var(--green-d); font-weight:700; font-size:12.5px; }
+    .shop-item.just-bought { animation:boughtPulse .5s ease; border-color:#1e9e4a; }
+    @keyframes boughtPulse { 0%{transform:scale(1);} 40%{transform:scale(1.03);} 100%{transform:scale(1);} }
+    #shopToast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); background:#22301f; color:#fff; font-weight:700; font-size:15px; padding:10px 18px; border-radius:999px; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease; z-index:99; box-shadow:0 8px 24px rgba(0,0,0,.3); }
+    #shopToast.show { opacity:1; transform:translateX(-50%) translateY(0); }
     footer { text-align:center; padding:18px 12px 30px; color:#6b7a5e; font-size:14px; }
     footer a { color:var(--green-d); font-weight:700; text-decoration:none; }
     @media (max-width:520px){ .logo{font-size:44px;} .game-wrap iframe{height:720px;} }
@@ -44,12 +67,13 @@
 <body>
   <header>
     <div class="logo">খেলাঘর<small>KHELAGHOR</small></div>
+    <div class="logo-rule"></div>
     <p class="tagline">ছোটবেলার খেলা, এখন ফোনে — গোল্লাছুট আর লুকোচুরি খেলো, কয়েন জমাও, দোকান থেকে কিনো!</p>
     <div id="announceBar" hidden></div>
   </header>
   <main>
     <div class="game-wrap">
-      <iframe src="game.html" title="গোল্লাছুট — Gollachut" allow="autoplay; fullscreen" loading="eager"></iframe>
+      <iframe id="gameFrame" src="game.html" title="গোল্লাছুট — Gollachut" allow="autoplay; fullscreen" loading="eager"></iframe>
     </div>
     <p class="note">💡 কয়েন, সেরা স্কোর আর কেনা জিনিস এই ডিভাইসে সেভ থাকে। · Coins and best score save on this device.</p>
 
@@ -58,6 +82,17 @@
       <a class="card live" href="lukochuri.html"><div class="emo">🙈</div><div class="nm">লুকোচুরি</div><div class="st">▶ খেলো এখনই</div></a>
       <div class="card soon-card"><div class="emo">🙈</div><div class="nm">কানামাছি</div><div class="st">শীঘ্রই আসছে</div></div>
       <div class="card soon-card"><div class="emo">🪁</div><div class="nm">ঘুড়ি</div><div class="st">শীঘ্রই আসছে</div></div>
+    </div>
+
+    <h2>🛒 দোকান · Shop</h2>
+    <div class="shop-wrap">
+      <div class="shop-tabs">
+        <button class="shop-tab on" data-game="gollachut">⚽ গোল্লাছুট</button>
+        <button class="shop-tab" data-game="lukochuri">🙈 লুকোচুরি</button>
+      </div>
+      <p class="shop-balance" id="shopBalance">🪙 ০ কয়েন</p>
+      <div id="shopList"></div>
+      <p class="note">কেনা জিনিস সাথে সাথে গেমে চলে যাবে — গেম খুললেই ব্যবহার করতে পারবে।</p>
     </div>
 
     <h2>কীভাবে খেলবে?</h2>
@@ -74,7 +109,174 @@
   <footer>
     খেলাঘর — ছোটবেলার খেলা, নতুন করে।
   </footer>
+  <div id="shopToast"></div>
   <script src="config.js"></script>
   <script src="settings-loader.js"></script>
+  <script>
+  "use strict";
+  /* ================= unified home-page shop (both games) =================
+     Buys write straight into each game's own save key, so the games pick the
+     items up on load. The embedded Gollachut frame is told to re-read its
+     save live (game.html listens for the "khelaghor-save" message). */
+  var BN = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"];
+  function num(n) { return String(n).replace(/[0-9]/g, function(d) { return BN[+d]; }); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function(c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  /* catalogs mirror game.html exactly (same ids, prices, names) */
+  var GH_SKINS = [
+    { id: "classic", color: "#1e8a49", price: 0,   bn: "সবুজ জার্সি",   ds: "আসল স্কুলের পোশাক" },
+    { id: "crimson", color: "#d63c2f", price: 50,  bn: "লাল জার্সি",     ds: "আগুনে লাল" },
+    { id: "ocean",   color: "#2470c9", price: 80,  bn: "নীল জার্সি",     ds: "ঠান্ডা সমুদ্র-নীল" },
+    { id: "tiger",   color: "#e8912d", price: 120, bn: "বাঘের জার্সি",   ds: "কমলা বাঘের মতো" },
+    { id: "royal",   color: "#7b4bb5", price: 180, bn: "রাজকীয় জার্সি", ds: "বেগুনি রাজকীয় লুক" },
+    { id: "gold",    color: "#e8a812", price: 250, bn: "সোনালি জার্সি",  ds: "চ্যাম্পিয়নদের সোনালি" },
+    { id: "sky",     color: "#35b6d9", price: 150, bn: "আকাশি জার্সি",   ds: "খোলা আকাশের মতো হালকা নীল" },
+    { id: "rose",    color: "#e5639a", price: 170, bn: "গোলাপি জার্সি",  ds: "গোলাপের মতো ঝলমলে" },
+    { id: "midnight", color: "#2e3a47", price: 230, bn: "মিডনাইট জার্সি", ds: "গভীর রাতের স্টাইল" },
+    { id: "emerald", color: "#0f9d6e", price: 200, bn: "পান্না জার্সি",  ds: "গভীর সবুজ পান্না" },
+    { id: "violet",  color: "#8e44ad", price: 210, bn: "বেগুনি জার্সি",  ds: "উজ্জ্বল বেগুনি" },
+    { id: "fire",    color: "#e4572e", price: 280, bn: "আগুনের জার্সি",  ds: "আগুনের মতো লাল-কমলা" }
+  ];
+  var GH_THEMES = [
+    { id: "village", price: 0,   bn: "গ্রামের মাঠ",   ds: "উষ্ণ গ্রামের মাঠ", gA: "#3f8f3a", sky: "#f7ead0" },
+    { id: "sunset",  price: 100, bn: "গোধূলির মাঠ",  ds: "সন্ধ্যার কমলা আলো", gA: "#55953c", sky: "#ffc98a" },
+    { id: "monsoon", price: 140, bn: "বর্ষার মাঠ",    ds: "বৃষ্টিভেজা সবুজ", gA: "#3e8f4e", sky: "#9fc6d8" },
+    { id: "night",   price: 200, bn: "রাতের স্টেডিয়াম", ds: "ফ্লাডলাইটের রাত", gA: "#256b33", sky: "#26354f" },
+    { id: "sand",    price: 120, bn: "বালুর মাঠ",     ds: "নদীর পাড়ের বালুর মাঠ", gA: "#cfa960", sky: "#ffe3ae" },
+    { id: "autumn",  price: 170, bn: "শরতের মাঠ",    ds: "শরতের সোনালি ঘাস", gA: "#7f9c38", sky: "#ffcf99" },
+    { id: "winter",  price: 180, bn: "শীতের মাঠ",     ds: "কুয়াশা-ভেজা শীতের সকাল", gA: "#7fae8a", sky: "#cfe8f5" },
+    { id: "forest",  price: 160, bn: "বনের মাঠ",      ds: "গভীর বনের সবুজ", gA: "#2f7d32", sky: "#b7e4c7" }
+  ];
+  var GH_POWERS = [
+    { id: "boost",  price: 30,  icon: "⚡", bg: "#ffe9a8", bn: "স্পিড বুস্ট",    ds: "পরের ম্যাচে রানার ১২% দ্রুত দৌড়াবে", field: "speedBoosts" },
+    { id: "life",   price: 40,  icon: "❤️", bg: "#ffd3d3", bn: "অতিরিক্ত জীবন", ds: "ট্যাগ খেলে একবার বেঁচে যাবে", field: "extraLives" },
+    { id: "ghost",  price: 120, icon: "👻", bg: "#e6d5f7", bn: "ভূত",           ds: "৩ সেকেন্ড অদৃশ্য থাকো", field: "ghosts" },
+    { id: "freeze", price: 100, icon: "❄️", bg: "#cfeef7", bn: "বরফ",           ds: "সব ট্যাগার ২ সেকেন্ড জমে যাবে", field: "freezes" },
+    { id: "dash",   price: 150, icon: "💨", bg: "#d8f3dc", bn: "ড্যাশ আপগ্রেড",  ds: "ঝাঁপ আরও লম্বা + দ্রুত রিচার্জ — চিরদিনের জন্য", field: "dashPro", once: true },
+    { id: "turbo",  price: 200, icon: "👟", bg: "#ffe9a8", bn: "টার্বো বুট",     ds: "রানার চিরদিন ৬% বেশি দ্রুত দৌড়াবে", field: "turboBoots", once: true }
+  ];
+  var LK_ITEMS = [
+    { id: "life",  price: 40, icon: "❤️", bg: "#ffd3d3", bn: "অতিরিক্ত জীবন", ds: "পরের ম্যাচে ৪টি জীবন নিয়ে শুরু করো", field: "extraLives" },
+    { id: "ghost", price: 60, icon: "👻", bg: "#e6d5f7", bn: "ভূতের শুরু",    ds: "ম্যাচের প্রথম ১০ সেকেন্ড অদৃশ্য থাকো", field: "ghostStarts" },
+    { id: "speed", price: 60, icon: "⚡", bg: "#ffe9a8", bn: "গতির শুরু",     ds: "ম্যাচের প্রথম ১০ সেকেন্ড দ্রুত দৌড়াও", field: "speedStarts" }
+  ];
+
+  var GH_KEY = "gollachut_save_v2", LK_KEY = "lukochuri_save_v1";
+  var activeGame = "gollachut";
+  function readSave(key) {
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : {}; }
+    catch (e) { return {}; }
+  }
+  function writeSave(key, obj) {
+    try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {}
+  }
+  function ownedBadge(n) {
+    return n > 0 ? ' <span class="owned-badge">✓ আছে: ' + num(n) + 'টি</span>' : "";
+  }
+  function renderShop() {
+    var isGH = activeGame === "gollachut";
+    var key = isGH ? GH_KEY : LK_KEY;
+    var s = readSave(key);
+    var coins = s.coins | 0;
+    document.getElementById("shopBalance").textContent = "🪙 " + num(coins) + " কয়েন";
+    var h = "";
+    if (isGH) {
+      var ownedSkins = s.ownedSkins || ["classic"], skin = s.skin || "classic";
+      var ownedThemes = s.ownedThemes || ["village"], theme = s.theme || "village";
+      h += '<div class="shop-sec">👕 জার্সি</div>';
+      GH_SKINS.forEach(function(sk) {
+        var owned = ownedSkins.indexOf(sk.id) >= 0, on = skin === sk.id;
+        var btn = on ? '<button class="buy equipped" disabled>✓ পরা আছে</button>'
+          : owned ? '<button class="buy equip" data-act="equip-skin" data-id="' + esc(sk.id) + '">পরো</button>'
+          : '<button class="buy" data-act="buy-skin" data-id="' + esc(sk.id) + '"' + (coins < sk.price ? " disabled" : "") + '>🪙 ' + num(sk.price) + '</button>';
+        h += '<div class="shop-item" data-item="skin-' + esc(sk.id) + '"><div class="sw" style="background:' + esc(sk.color) + '">👕</div><div class="info"><div class="nm">' + esc(sk.bn) + (owned && !on ? ' <span class="owned-badge">✓ কেনা আছে</span>' : "") + '</div><div class="ds">' + esc(sk.ds) + '</div></div>' + btn + '</div>';
+      });
+      h += '<div class="shop-sec">🌾 মাঠ</div>';
+      GH_THEMES.forEach(function(th) {
+        var owned = ownedThemes.indexOf(th.id) >= 0, on = theme === th.id;
+        var btn = on ? '<button class="buy equipped" disabled>✓ চলছে</button>'
+          : owned ? '<button class="buy equip" data-act="use-theme" data-id="' + esc(th.id) + '">বেছে নাও</button>'
+          : '<button class="buy" data-act="buy-theme" data-id="' + esc(th.id) + '"' + (coins < th.price ? " disabled" : "") + '>🪙 ' + num(th.price) + '</button>';
+        h += '<div class="shop-item" data-item="theme-' + esc(th.id) + '"><div class="sw" style="background:linear-gradient(180deg,' + esc(th.sky) + ' 45%,' + esc(th.gA) + ' 45%)">🌾</div><div class="info"><div class="nm">' + esc(th.bn) + (owned && !on ? ' <span class="owned-badge">✓ কেনা আছে</span>' : "") + '</div><div class="ds">' + esc(th.ds) + '</div></div>' + btn + '</div>';
+      });
+      h += '<div class="shop-sec">⚡ পাওয়ার-আপ</div>';
+      GH_POWERS.forEach(function(p) {
+        var n = s[p.field] | 0, has = p.once ? !!s[p.field] : false;
+        var btn;
+        if (has) btn = '<button class="buy equipped" disabled>✓ কেনা আছে</button>';
+        else btn = '<button class="buy" data-act="buy-' + p.id + '"' + (coins < p.price ? " disabled" : "") + '>🪙 ' + num(p.price) + '</button>';
+        h += '<div class="shop-item" data-item="' + p.id + '"><div class="sw" style="background:' + p.bg + '">' + p.icon + '</div><div class="info"><div class="nm">' + esc(p.bn) + '</div><div class="ds">' + esc(p.ds) + (p.once ? "" : ownedBadge(n)) + '</div></div>' + btn + '</div>';
+      });
+    } else {
+      h += '<div class="shop-sec">🙈 লুকোচুরি পাওয়ার-আপ</div>';
+      LK_ITEMS.forEach(function(p) {
+        var n = s[p.field] | 0;
+        var btn = '<button class="buy" data-act="buy-lk-' + p.id + '"' + (coins < p.price ? " disabled" : "") + '>🪙 ' + num(p.price) + '</button>';
+        h += '<div class="shop-item" data-item="lk-' + p.id + '"><div class="sw" style="background:' + p.bg + '">' + p.icon + '</div><div class="info"><div class="nm">' + esc(p.bn) + '</div><div class="ds">' + esc(p.ds) + ownedBadge(n) + '</div></div>' + btn + '</div>';
+      });
+    }
+    document.getElementById("shopList").innerHTML = h;
+  }
+  function showToast(text) {
+    var t = document.getElementById("shopToast");
+    t.textContent = text;
+    t.classList.add("show");
+    setTimeout(function() { t.classList.remove("show"); }, 1600);
+  }
+  function syncGameFrame() {
+    var f = document.getElementById("gameFrame");
+    if (f && f.contentWindow) { try { f.contentWindow.postMessage({ type: "khelaghor-save" }, "*"); } catch (e) {} }
+  }
+  document.querySelectorAll(".shop-tab").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll(".shop-tab").forEach(function(x) { x.classList.remove("on"); });
+      btn.classList.add("on");
+      activeGame = btn.getAttribute("data-game");
+      renderShop();
+    });
+  });
+  document.getElementById("shopList").addEventListener("click", function(e) {
+    var b = e.target.closest ? e.target.closest("button[data-act]") : null;
+    if (!b || b.disabled) return;
+    var act = b.getAttribute("data-act"), id = b.getAttribute("data-id");
+    var isGH = activeGame === "gollachut";
+    var key = isGH ? GH_KEY : LK_KEY;
+    var s = readSave(key);
+    var coins = s.coins | 0, bought = false;
+    function need(price) { if (coins < price) { showToast("কয়েন কম!"); return true; } return false; }
+    if (act === "buy-skin") {
+      var sk = null; GH_SKINS.forEach(function(x) { if (x.id === id) sk = x; });
+      if (!sk || need(sk.price)) return;
+      s.coins = coins - sk.price;
+      s.ownedSkins = s.ownedSkins || ["classic"]; s.ownedSkins.push(sk.id); s.skin = sk.id; bought = true;
+    } else if (act === "equip-skin") { s.skin = id; }
+    else if (act === "buy-theme") {
+      var th = null; GH_THEMES.forEach(function(x) { if (x.id === id) th = x; });
+      if (!th || need(th.price)) return;
+      s.coins = coins - th.price;
+      s.ownedThemes = s.ownedThemes || ["village"]; s.ownedThemes.push(th.id); s.theme = th.id; bought = true;
+    } else if (act === "use-theme") { s.theme = id; }
+    else if (act === "buy-boost" || act === "buy-life" || act === "buy-ghost" || act === "buy-freeze" || act === "buy-dash" || act === "buy-turbo") {
+      var p = null; GH_POWERS.forEach(function(x) { if ("buy-" + x.id === act) p = x; });
+      if (!p || need(p.price)) return;
+      s.coins = coins - p.price;
+      if (p.once) s[p.field] = true; else s[p.field] = (s[p.field] | 0) + 1;
+      bought = true;
+    }
+    else if (act === "buy-lk-life" || act === "buy-lk-ghost" || act === "buy-lk-speed") {
+      var lp = null; LK_ITEMS.forEach(function(x) { if ("buy-lk-" + x.id === act) lp = x; });
+      if (!lp || need(lp.price)) return;
+      s.coins = coins - lp.price;
+      s[lp.field] = (s[lp.field] | 0) + 1;
+      bought = true;
+    }
+    else return;
+    writeSave(key, s);
+    if (isGH) syncGameFrame();
+    renderShop();
+    if (bought) showToast("কেনা হয়েছে! 🎉");
+  });
+  renderShop();
+  </script>
 </body>
 </html>

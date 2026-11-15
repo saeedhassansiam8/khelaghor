@@ -35,7 +35,7 @@
         { id: "midnight", color: "#2e3a47", price: 230, bn: "মিডনাইট জার্সি", en: "Midnight Jersey", dsBn: "গভীর রাতের স্টাইল", dsEn: "Deep midnight style" }
       ],
       themes: [
-        { id: "village", price: 0,   bn: "গ্রামের মাঠ",   en: "Village Field",  gA: "#4da842", gB: "#57b34a", sky: "#aee3f5", dsBn: "সবুজ গ্রামের মাঠ", dsEn: "The green village field" },
+        { id: "village", price: 0,   bn: "গ্রামের মাঠ",   en: "Village Field",  gA: "#3f8f3a", gB: "#4da344", sky: "#f7ead0", dsBn: "উষ্ণ গ্রামের মাঠ", dsEn: "The warm village field" },
         { id: "sunset",  price: 100, bn: "গোধূলির মাঠ",   en: "Sunset Field",   gA: "#55953c", gB: "#63a848", sky: "#ffc98a", dsBn: "সন্ধ্যার কমলা আলো", dsEn: "Warm evening light" },
         { id: "monsoon", price: 140, bn: "বর্ষার মাঠ",    en: "Monsoon Field",  gA: "#3e8f4e", gB: "#479e58", sky: "#9fc6d8", dsBn: "বৃষ্টিভেজা সবুজ", dsEn: "Rain-washed green" },
         { id: "night",   price: 200, bn: "রাতের স্টেডিয়াম", en: "Night Stadium", gA: "#256b33", gB: "#2c783c", sky: "#26354f", dsBn: "ফ্লাডলাইটের রাত", dsEn: "Floodlit night match" },
