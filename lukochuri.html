@@ -257,6 +257,9 @@
       @media (prefers-color-scheme: dark) { .seg button.on { background: #1d4a2c; } }
       .rules { text-align: left; margin: 12px 0 4px; padding-left: 2px; list-style: none; font-size: 14.5px; line-height: 1.5; }
       .rules li { margin: 7px 0; padding-left: 4px; }
+      .rules-details { margin: 10px 0 2px; text-align: left; }
+      .rules-details summary { cursor: pointer; font-weight: 700; color: var(--green-dark); font-size: 15px; padding: 6px 2px; list-style: none; }
+      .rules-details summary::-webkit-details-marker { display: none; }
       .final-scores { display: flex; gap: 10px; justify-content: center; margin: 12px 0 2px; }
       .final-scores .fs { flex: 1; max-width: 150px; border-radius: 16px; padding: 10px 6px; background: var(--card); border: 2px solid rgba(0,0,0,0.07); }
       .final-scores .fs .n { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
@@ -306,6 +309,7 @@
 
         <div id="controls">
           <button class="big-btn" id="readyBtn" hidden>🙈 লুকিয়ে গেছি!</button>
+          <button class="big-btn" id="checkBtn" hidden>🔍 চেক করো!</button>
         </div>
 
         <!-- MENU -->
@@ -331,13 +335,16 @@
                 <button data-char="chup"><span class="dname">🤫 চুপচাপ</span><small class="dsub">ধরা পড়া ২০% ধীর</small></button>
                 <button data-char="lucky"><span class="dname">🍀 ভাগ্যবান</span><small class="dsub">পাওয়ার-আপ ৫০% বেশি সময়</small></button>
                 <button data-char="brave"><span class="dname">🦸 বীর</span><small class="dsub">লুকিয়ে মিটার ৫০% দ্রুত কমে</small></button>
+                <button data-char="storm"><span class="dname">🌪️ ঝড়</span><small class="dsub">২০% দ্রুত · ধরা পড়া ১৫% দ্রুত</small></button>
+                <button data-char="shadow"><span class="dname">🌑 ছায়া</span><small class="dsub">ধরা পড়া ৩০% ধীর</small></button>
+                <button data-char="patient"><span class="dname">🧘 ধৈর্য</span><small class="dsub">লুকিয়ে মিটার ২ গুণ দ্রুত কমে</small></button>
               </div>
             </div>
             <div class="stat-row">
               <div class="stat-box"><div class="n" id="statCoinsLabel">কয়েন</div><div class="v">🪙 <span id="menuCoins">০</span></div></div>
               <div class="stat-box"><div class="n" id="statBestLabel">সেরা (রাউন্ড)</div><div class="v" id="menuBest">০</div></div>
               <div class="stat-box"><div class="n" id="statWinsLabel">ম্যাচ জয়</div><div class="v" id="menuWins">০</div></div>
-              <div class="stat-box"><div class="n" id="statRoundsLabel">মোট রাউন্ড জয়</div><div class="v">🏆 <span id="menuRounds">০</span></div></div>
+              <div class="stat-box"><div class="n" id="statRoundsLabel">রাউন্ড জয়</div><div class="v">🏆 <span id="menuRounds">০</span></div></div>
             </div>
             <p class="mini-note" id="streakLine"></p>
             <div class="seg-label" id="achLabel">অ্যাচিভমেন্ট</div>
@@ -354,13 +361,16 @@
               <button data-mode="normal" class="on"><span class="dname">সাধারণ</span><small class="dsub">৫ রাউন্ডের ম্যাচ</small></button>
               <button data-mode="endless"><span class="dname">অন্তহীন</span><small class="dsub">জীবন শেষ না হওয়া পর্যন্ত</small></button>
             </div>
-            <ul class="rules" id="rulesList">
-              <li>🙈 <b>লুকানোর সময়</b> — জয়স্টিক/কিবোর্ড দিয়ে দৌড়ে খড়ের গাদা, গাছ, ঘর, গাড়ি, ঝোপ বা পুকুর পাড়ে লুকাও।</li>
-              <li>🔍 খোঁজারু চোখ বন্ধ করে গুনবে, তারপর <b>আলো-চোখ (vision cone)</b> নিয়ে খুঁজতে বেরোবে।</li>
-              <li>👁️ তার চোখের সামনে <b>নড়লেই</b> ধরা পড়ার মিটার বাড়বে! ভালো জায়গায় <b>চুপচাপ</b> থাকলে মিটার কমবে।</li>
-              <li>🏃 খোঁজারু দূরে তাকালে <b>চুপিসারে</b> অন্য জায়গায় সরে যাও — কিন্তু তার চোখে পড়লেই বিপদ!</li>
-              <li>⏱️ খোঁজার সময় শেষ হওয়া পর্যন্ত বেঁচে থাকলেই রাউন্ড জয়! ৫ রাউন্ডের ম্যাচ, ৩টি জীবন।</li>
-            </ul>
+            <details class="rules-details">
+              <summary>📖 নিয়ম · Rules</summary>
+              <ul class="rules" id="rulesList">
+                <li>🙈 <b>লুকানোর সময়</b> — জয়স্টিক/কিবোর্ড দিয়ে দৌড়ে খড়ের গাদা, গাছ, ঘর, গাড়ি, ঝোপ বা পুকুর পাড়ে লুকাও।</li>
+                <li>🔍 খোঁজারু চোখ বন্ধ করে গুনবে, তারপর <b>আলো-চোখ (vision cone)</b> নিয়ে খুঁজতে বেরোবে।</li>
+                <li>👁️ তার চোখের সামনে <b>নড়লেই</b> ধরা পড়ার মিটার বাড়বে! ভালো জায়গায় <b>চুপচাপ</b> থাকলে মিটার কমবে।</li>
+                <li>🏃 খোঁজারু দূরে তাকালে <b>চুপিসারে</b> অন্য জায়গায় সরে যাও — কিন্তু তার চোখে পড়লেই বিপদ!</li>
+                <li>⏱️ খোঁজার সময় শেষ হওয়া পর্যন্ত বেঁচে থাকলেই রাউন্ড জয়! ৫ রাউন্ডের ম্যাচ, ৩টি জীবন।</li>
+              </ul>
+            </details>
             <div class="btn-col">
               <button class="cta" id="startBtn">খেলা শুরু ▶</button>
               <button class="cta ghost" id="backBtn">🏠 খেলাঘর · মেনু</button>
@@ -409,6 +419,7 @@
             <p class="mini-note" id="endStats"></p>
             <p class="mini-note" id="endAch" hidden></p>
             <div class="btn-col">
+              <button class="cta" id="revengeBtn" hidden>🔍 বদলা রাউন্ড — এবার তুমি খোঁজো!</button>
               <button class="cta" id="rematchBtn">🔁 রিম্যাচ · আবার এই ম্যাচ</button>
               <button class="cta ghost" id="endMenuBtn">🏠 মেনুতে যাও</button>
             </div>
@@ -449,6 +460,14 @@ var T = {
     spottedTag: function(p){ return "👁 দেখা যাচ্ছে " + num(p) + "%"; },
     hiddenTag: "🤫 লুকিয়ে আছো",
     readyBtn: "🙈 লুকিয়ে গেছি!",
+    revengeBtn: "🔍 বদলা রাউন্ড — এবার তুমি খোঁজো!",
+    checkBtn: "🔍 চেক করো!",
+    revengeStatus: function(f){ return "🔍 বদলা রাউন্ড — " + num(f) + "/৩ জনকে পেয়েছো"; },
+    revengeFoundText: "১ জনকে পেলে! 🎉",
+    revengeFoundSub: function(f, n){ return num(f) + "/" + num(n) + " জন ধরা পড়েছে"; },
+    revengeNoneText: "এখানে কেউ নেই!",
+    revengeWinText: "বদলা নিলে! +১ জীবন +৫০ কয়েন 🎉",
+    revengeLoseText: "সময় শেষ! বদলা নেওয়া হলো না।",
     found: "ধরা পড়ে গেছো! 😖",
     survived: "বেঁচে গেছো! 🎉",
     roundWin: "রাউন্ড জিতেছো! 🎉",
@@ -472,7 +491,7 @@ var T = {
     menuIntro: "গ্রামের উঠোনে লুকোচুরি! তুমি লুকাবে, আর খোঁজার লোকটা তোমাকে খুঁজবে। ভালো জায়গায় চুপচাপ লুকিয়ে থাকলে জিতবে — নড়াচড়া করলেই ধরা!",
     menuNote: "৫ রাউন্ডের ম্যাচ · ৩টি জীবন · কয়েন আর সেরা স্কোর এই ডিভাইসে সেভ থাকে",
     menuNoteEndless: "অন্তহীন লুপ · ৩টি জীবন · রাউন্ড যত বাড়বে খোঁজারু তত দ্রুত হবে · কয়েন আর সেরা স্কোর এই ডিভাইসে সেভ থাকে",
-    statCoins: "কয়েন", statBest: "সেরা (রাউন্ড)", statWins: "ম্যাচ জয়", statRounds: "মোট রাউন্ড জয়",
+    statCoins: "কয়েন", statBest: "সেরা (রাউন্ড)", statWins: "ম্যাচ জয়", statRounds: "রাউন্ড জয়",
     diffLabel: "কঠিনতা বেছে নাও",
     modeLabel: "খেলার ধরন",
     modeNames: { normal: "সাধারণ", endless: "অন্তহীন" },
@@ -497,8 +516,8 @@ var T = {
     spotNames: { hay: "খড়ের গাদা", tree: "বড় গাছ", house1: "বাড়ির পেছনে", cart: "গরুর গাড়ি", bush: "ঝোপ", pond: "পুকুর পাড়", house2: "ছোট ঘর", banana: "কলাগাছ", paddy: "ধানক্ষেত", cowshed: "গোয়ালঘর", bamboo: "বাঁশঝাড়" },
     defaultName: "খেলোয়াড়",
     playerNameLabel: "তোমার নাম", charLabel: "চরিত্র বেছে নাও", achLabel: "অ্যাচিভমেন্ট",
-    charNames: { roni: "🏃 রনি", dour: "⚡ দৌড়বাজ", chup: "🤫 চুপচাপ", lucky: "🍀 ভাগ্যবান", brave: "🦸 বীর" },
-    charSubs: { roni: "সব দিক সমান", dour: "১২% দ্রুত", chup: "ধরা পড়া ২০% ধীর", lucky: "পাওয়ার-আপ ৫০% বেশি সময়", brave: "লুকিয়ে মিটার ৫০% দ্রুত কমে" },
+    charNames: { roni: "🏃 রনি", dour: "⚡ দৌড়বাজ", chup: "🤫 চুপচাপ", lucky: "🍀 ভাগ্যবান", brave: "🦸 বীর", storm: "🌪️ ঝড়", shadow: "🌑 ছায়া", patient: "🧘 ধৈর্য" },
+    charSubs: { roni: "সব দিক সমান", dour: "১২% দ্রুত", chup: "ধরা পড়া ২০% ধীর", lucky: "পাওয়ার-আপ ৫০% বেশি সময়", brave: "লুকিয়ে মিটার ৫০% দ্রুত কমে", storm: "২০% দ্রুত · ধরা পড়া ১৫% দ্রুত", shadow: "ধরা পড়া ৩০% ধীর", patient: "লুকিয়ে মিটার ২ গুণ দ্রুত কমে" },
     fxNames: { ghost: "👻 অদৃশ্য", speed: "⚡ দ্রুত", silent: "🔇 নীরব", coin: "🪙 কয়েন", life: "❤️ জীবন", gold: "🌟 সোনালি কয়েন" },
     puBanner: { ghost: "👻 অদৃশ্য! খোঁজারু তোমাকে দেখতে পাবে না", speed: "⚡ দ্রুত! ৬ সেকেন্ড দৌড়াও", silent: "🔇 নীরব! ধরা পড়া ধীর হয়ে গেল", coin: "🪙 +১০ কয়েন!", life: "❤️ +১ জীবন!", gold: "🌟 সোনালি কয়েন! +২৫ কয়েন!" },
     streakLine: function(s){ return s > 0 ? "🔥 সেরা পারফেক্ট স্ট্রিক: " + num(s) + " রাউন্ড" : "🔥 পারফেক্ট স্ট্রিক: এখনো নেই — পরপর পারফেক্ট রাউন্ড জেতো!"; },
@@ -518,6 +537,14 @@ var T = {
     spottedTag: function(p){ return "👁 Spotted " + p + "%"; },
     hiddenTag: "🤫 Hidden",
     readyBtn: "🙈 I'm hidden!",
+    revengeBtn: "🔍 Revenge Round — now YOU search!",
+    checkBtn: "🔍 Check!",
+    revengeStatus: function(f){ return "🔍 Revenge Round — found " + f + "/3"; },
+    revengeFoundText: "Found one! 🎉",
+    revengeFoundSub: function(f, n){ return f + "/" + n + " caught"; },
+    revengeNoneText: "Nobody here!",
+    revengeWinText: "Revenge! +1 life +50 coins 🎉",
+    revengeLoseText: "Time's up! No revenge this time.",
     found: "You got caught! 😖",
     survived: "You survived! 🎉",
     roundWin: "Round won! 🎉",
@@ -566,8 +593,8 @@ var T = {
     spotNames: { hay: "Haystack", tree: "Big Tree", house1: "Behind House", cart: "Bullock Cart", bush: "Bush", pond: "Pond Edge", house2: "Small Hut", banana: "Banana Tree", paddy: "Paddy Field", cowshed: "Cowshed", bamboo: "Bamboo Grove" },
     defaultName: "Player",
     playerNameLabel: "Your name", charLabel: "Choose your character", achLabel: "Achievements",
-    charNames: { roni: "🏃 Roni", dour: "⚡ Speedy", chup: "🤫 Quiet", lucky: "🍀 Lucky", brave: "🦸 Brave" },
-    charSubs: { roni: "Balanced", dour: "12% faster", chup: "Spotted 20% slower", lucky: "Power-ups last 50% longer", brave: "Spotted meter drains 50% faster" },
+    charNames: { roni: "🏃 Roni", dour: "⚡ Speedy", chup: "🤫 Quiet", lucky: "🍀 Lucky", brave: "🦸 Brave", storm: "🌪️ Storm", shadow: "🌑 Shadow", patient: "🧘 Patient" },
+    charSubs: { roni: "Balanced", dour: "12% faster", chup: "Spotted 20% slower", lucky: "Power-ups last 50% longer", brave: "Spotted meter drains 50% faster", storm: "20% faster · spotted 15% faster", shadow: "Spotted 30% slower", patient: "Spotted meter drains 2× faster" },
     fxNames: { ghost: "👻 Ghost", speed: "⚡ Speed", silent: "🔇 Silent", coin: "🪙 Coin", life: "❤️ Life", gold: "🌟 Golden Coin" },
     puBanner: { ghost: "👻 Ghost! The seeker can't see you", speed: "⚡ Speed! Run fast for 6 seconds", silent: "🔇 Silent! Spotted meter rises slower", coin: "🪙 +10 coins!", life: "❤️ +1 life!", gold: "🌟 Golden coin! +25 coins!" },
     streakLine: function(s){ return s > 0 ? "🔥 Best perfect streak: " + s + " rounds" : "🔥 Perfect streak: none yet — win perfect rounds in a row!"; },
@@ -583,11 +610,11 @@ var SPOTS = [
   { id: "hay",    x: 92,  y: 440, r: 46, risk: 0.50, kind: "circle" },
   { id: "tree",   x: 332, y: 175, r: 44, risk: 0.55, kind: "circle" },
   { id: "house1", x: 78,  y: 150, r: 48, risk: 0.80, kind: "circle" },
-  { id: "cart",   x: 322, y: 525, r: 44, risk: 0.85, kind: "circle" },
+  { id: "cart",   x: 316, y: 515, r: 44, risk: 0.85, kind: "circle" },
   { id: "bush",   x: 210, y: 330, r: 38, risk: 1.00, kind: "circle" },
-  { id: "pond",   x: 88,  y: 605, r: 46, risk: 1.25, kind: "circle" },
+  { id: "pond",   x: 70,  y: 640, r: 46, risk: 1.25, kind: "circle" },
   { id: "house2", x: 338, y: 330, r: 42, risk: 0.90, kind: "circle" },
-  { id: "banana", x: 300, y: 110, r: 40, risk: 0.60, kind: "circle" },
+  { id: "banana", x: 272, y: 105, r: 36, risk: 0.60, kind: "circle" },
   { id: "paddy",  x: 160, y: 520, r: 42, risk: 0.75, kind: "circle" },
   { id: "cowshed", x: 350, y: 610, r: 42, risk: 0.70, kind: "circle" },
   { id: "bamboo",  x: 60,  y: 300, r: 40, risk: 0.65, kind: "circle" }
@@ -596,9 +623,9 @@ var SPOTS = [
 var OBSTACLES_C = [
   { x: 332, y: 175, r: 13 },  /* big tree trunk */
   { x: 92,  y: 440, r: 30 },  /* haystack core */
-  { x: 322, y: 525, r: 26 },  /* cart body */
+  { x: 316, y: 515, r: 26 },  /* cart body */
   { x: 210, y: 330, r: 12 },  /* bush core */
-  { x: 300, y: 110, r: 13 },  /* banana tree trunk */
+  { x: 272, y: 105, r: 13 },  /* banana tree trunk */
   { x: 60,  y: 300, r: 12 }   /* bamboo core */
 ];
 var OBSTACLES_R = [
@@ -618,6 +645,7 @@ var DIFFS = {
   extreme:{ seekSpd: 112, range: 230, fov: 1.75, hideTime: 6, seekTime: 75, checkEvery: 3.5, chaseSpd: 140 }
 };
 var COIN_ROUND = 15, COIN_PERFECT = 10, COIN_MATCH_WIN = 25, COIN_PERFECT_MATCH = 25, COIN_POWERUP = 10, COIN_GOLD = 25;
+var REVENGE_HIDERS = 3, REVENGE_TIME = 30, COIN_REVENGE = 50;
 var PLAYER_SPEED = 150;
 var TOTAL_ROUNDS = 5;
 var CHARS = {
@@ -625,7 +653,10 @@ var CHARS = {
   dour: { color: "#e67e22", emoji: "⚡", spd: 1.12, stealth: 1 },
   chup: { color: "#1565c0", emoji: "🤫", spd: 1,    stealth: 0.8 },
   lucky: { color: "#7b1fa2", emoji: "🍀", spd: 1,   stealth: 1 },
-  brave: { color: "#c62828", emoji: "🦸", spd: 1,   stealth: 1 }
+  brave: { color: "#c62828", emoji: "🦸", spd: 1,   stealth: 1 },
+  storm: { color: "#00838f", emoji: "🌪️", spd: 1.2,  stealth: 1.15 },
+  shadow: { color: "#455a64", emoji: "🌑", spd: 0.95, stealth: 0.7 },
+  patient: { color: "#6d4c41", emoji: "🧘", spd: 0.9,  stealth: 1 }
 };
 var ACH = [
   { id: "first_win",  icon: "🏆", bn: "প্রথম জয়",    en: "First Win" },
@@ -642,13 +673,14 @@ var S = {
   lang: SAVE.lang === "en" ? "en" : "bn",
   sound: SAVE.sound !== false,
   diff: (["easy", "hard", "extreme"].indexOf(SAVE.diff) !== -1) ? SAVE.diff : "medium",
-  char: (["dour", "chup", "lucky", "brave"].indexOf(SAVE.char) !== -1) ? SAVE.char : "roni",
+  char: (["dour", "chup", "lucky", "brave", "storm", "shadow", "patient"].indexOf(SAVE.char) !== -1) ? SAVE.char : "roni",
   mode: (SAVE.mode === "endless") ? "endless" : "normal",
-  state: "menu",           /* menu | hide | seek | roundEnd | end */
+  state: "menu",           /* menu | hide | seek | roundEnd | end | revenge */
   paused: false,
   round: 1, lives: 3, roundsSurvived: 0,
   matchCoins: 0, roundCoins: 0,
-  perfectCount: 0, perfectStreak: 0, roundResults: [], newAch: [],
+  perfectCount: 0, perfectStreak: 0, roundResults: [], newAch: [], matchCounted: false,
+  revengeUsed: false, revengeHiders: [], revengeFound: 0, revengeTime: 0, revengeCd: 0,
   powerups: [], fx: { ghost: 0, speed: 0, silent: 0 }, fxSpawned: false,
   hideTime: 0, seekTime: 0,
   spotted: 0, maxSpotted: 0, seen: false,
@@ -675,6 +707,8 @@ function spotAt(x, y) {
   }
   return null;
 }
+/* spot rings + names show only while the player is choosing a spot */
+function spotMarkersVisible() { return S.state === "hide"; }
 
 /* ================= audio (WebAudio tones, no assets) ================= */
 var AC = null;
@@ -736,8 +770,8 @@ function drawField() {
   /* grass */
   ctx.fillStyle = "#57b34a";
   ctx.fillRect(0, 0, VW, VH);
-  ctx.fillStyle = "rgba(255,255,255,0.05)";
-  for (var i = 0; i < 40; i++) {
+  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  for (var i = 0; i < 28; i++) {
     var gx = (i * 97) % VW, gy = (i * 61) % VH;
     ctx.beginPath(); ctx.arc(gx, gy, 14 + (i % 3) * 6, 0, Math.PI * 2); ctx.fill();
   }
@@ -769,7 +803,7 @@ function drawField() {
   drawTree(332, 175, 34);
   drawTree(52, 300, 24);
   drawTree(368, 90, 22);
-  drawTree(300, 110, 28); /* banana tree spot */
+  drawTree(272, 105, 28); /* banana tree spot */
   drawHouse(308, 578, 84, 64, "#e8d8b0", "#8d6e63"); /* cowshed spot */
   drawBush(60, 300, 30); /* bamboo grove spot */
   ctx.strokeStyle = "#33691e"; ctx.lineWidth = 3;
@@ -781,17 +815,18 @@ function drawField() {
   ctx.beginPath(); ctx.moveTo(92, 404); ctx.lineTo(122, 440); ctx.lineTo(62, 440); ctx.closePath(); ctx.fill();
   /* bullock cart */
   ctx.fillStyle = "#8d6e63";
-  ctx.fillRect(296, 505, 52, 34);
+  ctx.fillRect(290, 495, 52, 34);
   ctx.fillStyle = "#6d4c41";
-  ctx.beginPath(); ctx.arc(302, 542, 10, 0, Math.PI * 2); ctx.arc(342, 542, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(296, 532, 10, 0, Math.PI * 2); ctx.arc(336, 532, 10, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = "#5d4037"; ctx.lineWidth = 5;
-  ctx.beginPath(); ctx.moveTo(348, 522); ctx.lineTo(372, 540); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(342, 512); ctx.lineTo(366, 530); ctx.stroke();
   /* bushes */
   drawBush(210, 330, 30);
   drawBush(150, 210, 20);
   drawBush(380, 560, 22);
-  /* hiding-spot markers (dashed ring + risk dots) */
-  for (var i = 0; i < SPOTS.length; i++) {
+  /* hiding-spot markers (dashed ring + name) — shown only while choosing
+     a spot (hide phase); hidden during the seek so the field stays clean */
+  if (spotMarkersVisible()) for (var i = 0; i < SPOTS.length; i++) {
     var sp = SPOTS[i];
     ctx.save();
     ctx.setLineDash([6, 5]);
@@ -846,6 +881,7 @@ function drawPowerups() {
   }
 }
 function drawPlayer() {
+  if (S.state === "revenge") return; /* the player IS the seeker in a revenge round */
   var p = S.player;
   var bobY = p.moving ? Math.sin(S.bob * 10) * 2 : Math.sin(S.bob * 2) * 1;
   ctx.save();
@@ -880,6 +916,18 @@ function drawPlayer() {
     ctx.lineWidth = 4;
     ctx.beginPath(); ctx.arc(p.x, p.y, 20, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * S.spotted / 100)); ctx.stroke();
     ctx.restore();
+  }
+}
+function drawRevengeHiders() {
+  if (S.state !== "revenge") return;
+  for (var i = 0; i < S.revengeHiders.length; i++) {
+    var h = S.revengeHiders[i];
+    if (!h.found) continue;
+    var sp = null;
+    for (var j = 0; j < SPOTS.length; j++) if (SPOTS[j].id === h.spotId) sp = SPOTS[j];
+    if (!sp) continue;
+    ctx.font = "22px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("🧒", sp.x, sp.y - 6);
   }
 }
 function drawSeeker() {
@@ -935,6 +983,7 @@ function render() {
   drawField();
   drawPowerups();
   drawSeeker();
+  drawRevengeHiders();
   drawPlayer();
   ctx.restore();
 }
@@ -984,11 +1033,12 @@ window.addEventListener("keydown", function(e) {
     if (S.paused) { togglePause(false); return; }
   }
   if ((e.key === " " || e.key === "Enter") && S.state === "hide" && !el("readyBtn").hidden) { e.preventDefault(); startSeek(); }
+  if ((e.key === " " || e.key === "Enter") && S.state === "revenge" && !el("checkBtn").hidden) { e.preventDefault(); checkRevengeSpot(); }
 });
 window.addEventListener("keyup", function(e) { S.keys[e.key.toLowerCase()] = false; });
 window.addEventListener("blur", function() { S.keys = {}; });
 document.addEventListener("visibilitychange", function() {
-  if (document.hidden) { S.keys = {}; if (!S.paused && (S.state === "hide" || S.state === "seek")) togglePause(true); }
+  if (document.hidden) { S.keys = {}; if (!S.paused && (S.state === "hide" || S.state === "seek" || S.state === "revenge")) togglePause(true); }
 });
 
 /* ================= dom refs + helpers ================= */
@@ -1026,8 +1076,8 @@ function collide(x, y, r) {
   x = clamp(x, 16, VW - 16); y = clamp(y, 16, VH - 16);
   return { x: x, y: y };
 }
-function updatePlayer(dt) {
-  var p = S.player;
+function updatePlayer(dt, who) {
+  var p = who || S.player;
   var kx = 0, ky = 0;
   var k = S.keys;
   if (k["arrowright"] || k["d"]) kx += 1;
@@ -1139,7 +1189,7 @@ function updateSpotted(dt) {
     S.spotted += rate * dt;
     if (S.spotted >= 70 && !S.chase) { S.chase = true; S.chaseLost = 0; sndSpot(); }
   } else {
-    var decay = S.char === "brave" ? 21 : 14;
+    var decay = S.char === "brave" ? 21 : (S.char === "patient" ? 28 : 14);
     S.spotted = Math.max(0, S.spotted - decay * dt);
     /* close call: the meter was dangerously high this round (>= 50) and now drained to safety */
     if (S.maxSpotted >= 50 && S.spotted < 20 && !S.closeCalled) { S.closeCalled = true; showBanner(T[S.lang].closeCall); }
@@ -1225,6 +1275,13 @@ function update(dt) {
     if (S.state !== "seek") return;
     S.seekTime -= dt;
     if (S.seekTime <= 0) { winRound(); }
+  } else if (S.state === "revenge") {
+    updatePlayer(dt, S.seeker);
+    S.revengeCd = Math.max(0, S.revengeCd - dt);
+    var rsp = spotAt(S.seeker.x, S.seeker.y);
+    el("checkBtn").hidden = !(rsp && S.revengeCd <= 0);
+    S.revengeTime -= dt;
+    if (S.revengeTime <= 0) { endRevenge(false); }
   }
   /* power-up timers + spawn 5s into the seek phase (never during the hide) */
   if (S.state === "hide" || S.state === "seek") {
@@ -1271,6 +1328,7 @@ function updateHUD() {
   if (S.state === "menu") status = t.ready;
   else if (S.state === "hide") { status = t.hidePhase + " · " + t.hideHint; cls = "hide-phase"; }
   else if (S.state === "seek") { status = S.chase ? t.chasing : t.seekPhase; if (S.spotted >= 60) cls = "danger"; }
+  else if (S.state === "revenge") { status = t.revengeStatus(S.revengeFound); }
   else if (S.state === "roundEnd") status = "";
   else if (S.state === "end") status = "";
   if (_hud.status !== status) { _hud.status = status; el("statusText").textContent = status; }
@@ -1290,12 +1348,13 @@ function updateHUD() {
   var timer = "";
   if (S.state === "hide") timer = "⏱ " + fmtTime(Math.max(0, S.hideTime));
   else if (S.state === "seek") timer = "⏱ " + fmtTime(Math.max(0, S.seekTime));
+  else if (S.state === "revenge") timer = "⏱ " + fmtTime(Math.max(0, S.revengeTime));
   if (_hud.timer !== timer) {
     _hud.timer = timer;
     var tt = el("timerTag");
     tt.hidden = !timer;
     tt.textContent = timer;
-    tt.classList.toggle("low", (S.state === "hide" && S.hideTime <= 3.5) || (S.state === "seek" && S.seekTime <= 10.5));
+    tt.classList.toggle("low", (S.state === "hide" && S.hideTime <= 3.5) || (S.state === "seek" && S.seekTime <= 10.5) || (S.state === "revenge" && S.revengeTime <= 10.5));
   }
 }
 function showBanner(main, sub) {
@@ -1312,6 +1371,7 @@ function hideAllOverlays() {
 function startMatch() {
   S.round = 1; S.lives = 3; S.roundsSurvived = 0; S.matchCoins = 0;
   S.perfectCount = 0; S.perfectStreak = 0; S.roundResults = []; S.newAch = [];
+  S.revengeUsed = false; S.matchCounted = false;
   hideAllOverlays();
   setupRound();
 }
@@ -1339,6 +1399,61 @@ function startSeek() {
   _hud.status = ""; _hud.timer = "";
   updateHUD();
   sndWhistle();
+}
+/* ================= revenge round: lose the match, then YOU search ================= */
+function startRevenge() {
+  if (S.revengeUsed || S.lives > 0) return;
+  S.revengeUsed = true;
+  var idx = SPOTS.map(function(_, i) { return i; });
+  for (var i = idx.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = idx[i]; idx[i] = idx[j]; idx[j] = t; }
+  S.revengeHiders = idx.slice(0, REVENGE_HIDERS).map(function(i) { return { spotId: SPOTS[i].id, found: false }; });
+  S.revengeFound = 0;
+  S.revengeTime = REVENGE_TIME;
+  S.revengeCd = 0;
+  S.seeker = { x: COUNT_SPOT.x, y: COUNT_SPOT.y, face: -Math.PI / 2, wp: 0, wait: 0, checking: null, checkT: 0, scanA: 0 };
+  S.player.x = -100; S.player.y = -100; S.player.moving = false;
+  S.powerups = []; S.fx = { ghost: 0, speed: 0, silent: 0 };
+  S.state = "revenge"; S.paused = false;
+  joyHide();
+  el("checkBtn").hidden = true;
+  hideAllOverlays();
+  _hud.status = ""; _hud.timer = ""; _hud.spot = "";
+  updateHUD();
+  sndWhistle();
+}
+function checkRevengeSpot() {
+  if (S.state !== "revenge" || S.revengeCd > 0) return;
+  var sp = spotAt(S.seeker.x, S.seeker.y);
+  if (!sp) return;
+  S.revengeCd = 1.5;
+  el("checkBtn").hidden = true;
+  var h = null;
+  for (var i = 0; i < S.revengeHiders.length; i++) if (S.revengeHiders[i].spotId === sp.id) h = S.revengeHiders[i];
+  if (h && !h.found) {
+    h.found = true;
+    S.revengeFound++;
+    sndCoin();
+    showBanner(T[S.lang].revengeFoundText, T[S.lang].revengeFoundSub(S.revengeFound, REVENGE_HIDERS));
+    if (S.revengeFound >= REVENGE_HIDERS) { endRevenge(true); }
+  } else {
+    sndClick();
+    showBanner(T[S.lang].revengeNoneText, "");
+  }
+}
+function endRevenge(won) {
+  if (S.state !== "revenge") return;
+  el("checkBtn").hidden = true;
+  if (won) {
+    S.lives = 1;
+    SAVE.coins += COIN_REVENGE; S.matchCoins += COIN_REVENGE;
+    persist();
+    sndWin();
+    showBanner(T[S.lang].revengeWinText, "");
+    setupRound();
+  } else {
+    sndFound();
+    endMatch();
+  }
 }
 function winRound() {
   if (S.state !== "seek") return;
@@ -1397,7 +1512,7 @@ function endMatch() {
   var perfectMatch = S.mode !== "endless" && S.roundsSurvived === TOTAL_ROUNDS && S.perfectCount === TOTAL_ROUNDS;
   if (won) { SAVE.coins += COIN_MATCH_WIN; S.matchCoins += COIN_MATCH_WIN; SAVE.wins++; }
   if (perfectMatch) { SAVE.coins += COIN_PERFECT_MATCH; S.matchCoins += COIN_PERFECT_MATCH; }
-  SAVE.matches++;
+  if (!S.matchCounted) { SAVE.matches++; S.matchCounted = true; } /* one match counts once, even if a revenge round continues it */
   SAVE.best = Math.max(SAVE.best, S.roundsSurvived);
   SAVE.bestStreak = Math.max(SAVE.bestStreak || 0, S.perfectStreak);
   if (won && S.diff === "hard") unlockAch("hard_win");
@@ -1420,19 +1535,23 @@ function endMatch() {
     ea.textContent = t.endAchText(names.join(", "));
     ea.hidden = false;
   } else { ea.hidden = true; }
+  S.newAch = [];
+  /* revenge round: offered once, only when the match was lost on lives with rounds left */
+  var canRevenge = !won && S.lives <= 0 && !S.revengeUsed && (S.mode === "endless" || S.round < TOTAL_ROUNDS);
+  el("revengeBtn").hidden = !canRevenge;
   hideAllOverlays();
   el("endOverlay").hidden = false;
   updateHUD();
 }
 function togglePause(on) {
-  if (S.state !== "hide" && S.state !== "seek" && !S.paused) return;
+  if (S.state !== "hide" && S.state !== "seek" && S.state !== "revenge" && !S.paused) return;
   S.paused = on;
   el("pauseOverlay").hidden = !on;
   if (on) { S.keys = {}; joyHide(); }
 }
 function quitToMenu() {
   S.state = "menu"; S.paused = false;
-  joyHide(); el("readyBtn").hidden = true;
+  joyHide(); el("readyBtn").hidden = true; el("checkBtn").hidden = true;
   hideAllOverlays();
   el("menuOverlay").hidden = false;
   refreshMenuStats();
@@ -1515,12 +1634,14 @@ function applyLang() {
   el("roundNextBtn").textContent = t.nextRound;
   el("roundMenuBtn").textContent = t.quit;
   el("rematchBtn").textContent = t.rematch;
+  el("revengeBtn").textContent = t.revengeBtn;
   el("endMenuBtn").textContent = t.quit;
   el("livesLabel").textContent = t.lives;
   el("roundsLabel").textContent = t.roundsWon;
   el("fsRoundsLabel").textContent = t.roundsWon;
   el("fsLivesLabel").textContent = t.livesLabel;
   el("readyBtn").textContent = t.readyBtn;
+  el("checkBtn").textContent = t.checkBtn;
   el("langBtn").textContent = S.lang === "bn" ? "EN" : "বাং";
   var rules = el("rulesList");
   rules.innerHTML = "";
@@ -1549,6 +1670,8 @@ function pressBtn(btn, fn) {
 el("startBtn").addEventListener("click", function() { ensureAudio(); sndClick(); startMatch(); });
 el("backBtn").addEventListener("click", function() { sndClick(); window.location.href = "index.html"; });
 el("readyBtn").addEventListener("click", function() { ensureAudio(); sndClick(); startSeek(); });
+el("checkBtn").addEventListener("click", function() { ensureAudio(); sndClick(); checkRevengeSpot(); });
+el("revengeBtn").addEventListener("click", function() { sndClick(); startRevenge(); });
 el("roundNextBtn").addEventListener("click", function() { sndClick(); nextRound(); });
 el("roundMenuBtn").addEventListener("click", function() { sndClick(); quitToMenu(); });
 el("rematchBtn").addEventListener("click", function() { sndClick(); startMatch(); });
