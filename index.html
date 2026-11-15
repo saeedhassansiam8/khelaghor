@@ -44,6 +44,12 @@
     .shop-tab.on { background:var(--gold); border-color:var(--gold-d); color:#4a2f00; }
     .shop-balance { text-align:center; font-family:"Baloo Da 2",cursive; font-weight:800; font-size:20px; margin:4px 0 8px; }
     .shop-sec { text-align:left; font-family:"Baloo Da 2",cursive; font-weight:800; font-size:17px; margin:14px 2px 6px; color:var(--green-d); }
+    .shop-details { margin:6px 0; }
+    .shop-details summary { font-family:"Baloo Da 2",cursive; font-weight:800; font-size:17px; color:var(--green-d); cursor:pointer; padding:8px 4px; list-style:none; display:flex; align-items:center; gap:6px; }
+    .shop-details summary::-webkit-details-marker { display:none; }
+    .shop-details summary::before { content:"▸"; color:var(--gold-d); font-size:15px; transition:transform .15s ease; }
+    .shop-details[open ] summary::before { transform:rotate(90deg); }
+    .shop-details summary .cnt { font-size:13px; color:#8a7a3a; font-weight:700; }
     .shop-item { display:flex; align-items:center; gap:10px; background:#fffdf4; border:1px solid #eadfbe; border-radius:14px; padding:9px 10px; margin:7px 0; }
     .shop-item .sw { width:42px; height:42px; border-radius:50%; flex:none; border:3px solid rgba(0,0,0,.15); display:flex; align-items:center; justify-content:center; font-size:20px; }
     .shop-item .info { flex:1; min-width:0; }
@@ -163,6 +169,8 @@
 
   var GH_KEY = "gollachut_save_v2", LK_KEY = "lukochuri_save_v1";
   var activeGame = "gollachut";
+  /* which shop sections stay open (power-ups + lukochuri open by default) */
+  var shopOpen = { skins: false, themes: false, powers: true, lk: true };
   function readSave(key) {
     try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : {}; }
     catch (e) { return {}; }
@@ -183,7 +191,7 @@
     if (isGH) {
       var ownedSkins = s.ownedSkins || ["classic"], skin = s.skin || "classic";
       var ownedThemes = s.ownedThemes || ["village"], theme = s.theme || "village";
-      h += '<div class="shop-sec">👕 জার্সি</div>';
+      h += '<details class="shop-details" data-sec="skins"' + (shopOpen.skins ? " open" : "") + '><summary>👕 জার্সি <span class="cnt">· ' + num(GH_SKINS.length) + 'টি</span></summary>';
       GH_SKINS.forEach(function(sk) {
         var owned = ownedSkins.indexOf(sk.id) >= 0, on = skin === sk.id;
         var btn = on ? '<button class="buy equipped" disabled>✓ পরা আছে</button>'
@@ -191,7 +199,8 @@
           : '<button class="buy" data-act="buy-skin" data-id="' + esc(sk.id) + '"' + (coins < sk.price ? " disabled" : "") + '>🪙 ' + num(sk.price) + '</button>';
         h += '<div class="shop-item" data-item="skin-' + esc(sk.id) + '"><div class="sw" style="background:' + esc(sk.color) + '">👕</div><div class="info"><div class="nm">' + esc(sk.bn) + (owned && !on ? ' <span class="owned-badge">✓ কেনা আছে</span>' : "") + '</div><div class="ds">' + esc(sk.ds) + '</div></div>' + btn + '</div>';
       });
-      h += '<div class="shop-sec">🌾 মাঠ</div>';
+      h += '</details>';
+      h += '<details class="shop-details" data-sec="themes"' + (shopOpen.themes ? " open" : "") + '><summary>🌾 মাঠ <span class="cnt">· ' + num(GH_THEMES.length) + 'টি</span></summary>';
       GH_THEMES.forEach(function(th) {
         var owned = ownedThemes.indexOf(th.id) >= 0, on = theme === th.id;
         var btn = on ? '<button class="buy equipped" disabled>✓ চলছে</button>'
@@ -199,7 +208,8 @@
           : '<button class="buy" data-act="buy-theme" data-id="' + esc(th.id) + '"' + (coins < th.price ? " disabled" : "") + '>🪙 ' + num(th.price) + '</button>';
         h += '<div class="shop-item" data-item="theme-' + esc(th.id) + '"><div class="sw" style="background:linear-gradient(180deg,' + esc(th.sky) + ' 45%,' + esc(th.gA) + ' 45%)">🌾</div><div class="info"><div class="nm">' + esc(th.bn) + (owned && !on ? ' <span class="owned-badge">✓ কেনা আছে</span>' : "") + '</div><div class="ds">' + esc(th.ds) + '</div></div>' + btn + '</div>';
       });
-      h += '<div class="shop-sec">⚡ পাওয়ার-আপ</div>';
+      h += '</details>';
+      h += '<details class="shop-details" data-sec="powers"' + (shopOpen.powers ? " open" : "") + '><summary>⚡ পাওয়ার-আপ <span class="cnt">· ' + num(GH_POWERS.length) + 'টি</span></summary>';
       GH_POWERS.forEach(function(p) {
         var n = s[p.field] | 0, has = p.once ? !!s[p.field] : false;
         var btn;
@@ -207,13 +217,15 @@
         else btn = '<button class="buy" data-act="buy-' + p.id + '"' + (coins < p.price ? " disabled" : "") + '>🪙 ' + num(p.price) + '</button>';
         h += '<div class="shop-item" data-item="' + p.id + '"><div class="sw" style="background:' + p.bg + '">' + p.icon + '</div><div class="info"><div class="nm">' + esc(p.bn) + '</div><div class="ds">' + esc(p.ds) + (p.once ? "" : ownedBadge(n)) + '</div></div>' + btn + '</div>';
       });
+      h += '</details>';
     } else {
-      h += '<div class="shop-sec">🙈 লুকোচুরি পাওয়ার-আপ</div>';
+      h += '<details class="shop-details" data-sec="lk"' + (shopOpen.lk ? " open" : "") + '><summary>🙈 লুকোচুরি পাওয়ার-আপ <span class="cnt">· ' + num(LK_ITEMS.length) + 'টি</span></summary>';
       LK_ITEMS.forEach(function(p) {
         var n = s[p.field] | 0;
         var btn = '<button class="buy" data-act="buy-lk-' + p.id + '"' + (coins < p.price ? " disabled" : "") + '>🪙 ' + num(p.price) + '</button>';
         h += '<div class="shop-item" data-item="lk-' + p.id + '"><div class="sw" style="background:' + p.bg + '">' + p.icon + '</div><div class="info"><div class="nm">' + esc(p.bn) + '</div><div class="ds">' + esc(p.ds) + ownedBadge(n) + '</div></div>' + btn + '</div>';
       });
+      h += '</details>';
     }
     document.getElementById("shopList").innerHTML = h;
   }
@@ -235,6 +247,10 @@
       renderShop();
     });
   });
+  document.getElementById("shopList").addEventListener("toggle", function(e) {
+    var d = e.target.closest ? e.target.closest("details[data-sec]") : null;
+    if (d) shopOpen[d.getAttribute("data-sec")] = d.open;
+  }, true);
   document.getElementById("shopList").addEventListener("click", function(e) {
     var b = e.target.closest ? e.target.closest("button[data-act]") : null;
     if (!b || b.disabled) return;

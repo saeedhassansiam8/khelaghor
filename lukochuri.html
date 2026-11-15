@@ -474,6 +474,11 @@ var T = {
     roundWin: "রাউন্ড জিতেছো! 🎉",
     roundFound: "এই রাউন্ডে ধরা পড়েছো 😖",
     roundWinText: "খোঁজার সময় শেষ — খোঁজারু তোমাকে খুঁজে পায়নি!",
+    baseWinText: "বেইসে পৌঁছে গেছো! খোঁজারুর চোখ ফাঁকি দিয়ে দৌড়ে এলে! +১৫ বোনাস",
+    kidBolt: "🏃 সাথী দৌড়াচ্ছে! খোঁজারু দেখে ফেলেছে!",
+    kidSafe: "🎉 সাথী বেইসে পৌঁছে গেছে! +৫ কয়েন",
+    kidCaught: "💥 সাথী ধরা পড়লো!",
+    kidsStats: function(safe, bonus){ return "সাথী: " + num(safe) + " জন বাঁচলো · +🪙 " + num(bonus); },
     closeCall: "😜 উফফ! ফাঁকি দিলে!",
     roundFoundText: "খোঁজারু তোমাকে দেখে ফেলেছে! একটা জীবন গেল।",
     perfectTag: " · 🌟 পারফেক্ট লুকানো!",
@@ -551,6 +556,11 @@ var T = {
     roundWin: "Round won! 🎉",
     roundFound: "Caught this round 😖",
     roundWinText: "Seek time ran out — the seeker never found you!",
+    baseWinText: "You reached base! You dashed past the seeker! +15 bonus",
+    kidBolt: "🏃 Your friend is running! The seeker spotted them!",
+    kidSafe: "🎉 Your friend reached base! +5 coins",
+    kidCaught: "💥 Your friend got caught!",
+    kidsStats: function(safe, bonus){ return "Friends: " + safe + " survived · +🪙 " + bonus; },
     closeCall: "😜 Phew! You slipped away!",
     roundFoundText: "The seeker spotted you! You lost a life.",
     perfectTag: " · 🌟 Perfect hide!",
@@ -683,6 +693,8 @@ var S = {
   perfectCount: 0, perfectStreak: 0, roundResults: [], newAch: [], matchCounted: false,
   revengeUsed: false, revengeHiders: [], revengeFound: 0, revengeTime: 0, revengeCd: 0,
   powerups: [], fx: { ghost: 0, speed: 0, silent: 0 }, fxSpawned: false,
+  kids: [], kidsBonus: 0,
+  crowdT: 0, crowdMood: "cheer",
   hideTime: 0, seekTime: 0,
   spotted: 0, maxSpotted: 0, seen: false,
   chase: false, chaseLost: 0, closeCalled: false,
@@ -776,6 +788,18 @@ function drawField() {
     var gx = (i * 97) % VW, gy = (i * 61) % VH;
     ctx.beginPath(); ctx.arc(gx, gy, 14 + (i % 3) * 6, 0, Math.PI * 2); ctx.fill();
   }
+  /* butterflies drifting across the courtyard */
+  var bcols = ["#f2b01e", "#e5639a", "#35b6d9"];
+  for (var bi = 0; bi < 3; bi++) {
+    var bx = 50 + ((S.bob * 14 + bi * 140) % 330);
+    var by = 110 + Math.sin(S.bob * 1.6 + bi * 2.1) * 46 + bi * 170;
+    var flap = Math.sin(S.bob * 10 + bi * 3) * 3;
+    ctx.fillStyle = bcols[bi];
+    ctx.beginPath(); ctx.ellipse(bx - 4, by, 5, 3 + flap, -0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(bx + 4, by, 5, 3 + flap, 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#333";
+    ctx.beginPath(); ctx.arc(bx, by, 1.6, 0, Math.PI * 2); ctx.fill();
+  }
   /* dirt paths */
   ctx.strokeStyle = "#c9a86a"; ctx.lineCap = "round";
   ctx.lineWidth = 26; ctx.beginPath();
@@ -846,6 +870,7 @@ function drawField() {
     ctx.fillText(T[S.lang].spotNames[sp.id], sp.x, sp.y - sp.r - 6);
     ctx.restore();
   }
+  drawCrowd();
 }
 function drawHouse(x, y, w, h, wall, roof) {
   ctx.fillStyle = wall;
@@ -859,14 +884,15 @@ function drawHouse(x, y, w, h, wall, roof) {
   ctx.fillRect(x + w - 26, y + 30, 16, 14);
 }
 function drawTree(x, y, r) {
+  var sway = Math.sin(S.bob * 1.2 + x * 0.05) * 2;
   ctx.fillStyle = "#7a4a21";
   ctx.fillRect(x - 5, y - 6, 10, r + 8);
   ctx.fillStyle = "#2e7d32";
-  ctx.beginPath(); ctx.arc(x, y - 14, r, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + sway, y - 14, r, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#388e3c";
-  ctx.beginPath(); ctx.arc(x - r * 0.45, y - 6, r * 0.6, 0, Math.PI * 2); ctx.arc(x + r * 0.45, y - 6, r * 0.6, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - r * 0.45 + sway, y - 6, r * 0.6, 0, Math.PI * 2); ctx.arc(x + r * 0.45 + sway, y - 6, r * 0.6, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#4da344";
-  ctx.beginPath(); ctx.arc(x, y - 14 - r * 0.45, r * 0.42, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + sway, y - 14 - r * 0.45, r * 0.42, 0, Math.PI * 2); ctx.fill();
 }
 function drawBush(x, y, r) {
   ctx.fillStyle = "#33691e";
@@ -979,6 +1005,33 @@ function drawSeeker() {
     ctx.fillText("❗", k.x, k.y - 26);
   }
 }
+function drawKids() {
+  if (S.state !== "hide" && S.state !== "seek" && S.state !== "roundEnd") return;
+  for (var i = 0; i < S.kids.length; i++) {
+    var k = S.kids[i];
+    if (k.state === "hide" || k.state === "caught") continue; /* hidden kids stay invisible */
+    var bobY = Math.sin(S.bob * 10 + i * 2) * 2;
+    ctx.save();
+    ctx.translate(k.x, k.y + bobY);
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    ctx.beginPath(); ctx.ellipse(0, 12 - bobY, 11, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = k.color;
+    ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#f1c27d";
+    ctx.beginPath(); ctx.arc(0, -9, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.font = "15px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(k.emoji, 0, -20);
+    if (k.state === "bolt") {
+      ctx.font = "bold 15px sans-serif";
+      ctx.fillText("!", 0, -34);
+    }
+    if (k.state === "safe") {
+      ctx.font = "15px sans-serif";
+      ctx.fillText("🎉", 0, -34);
+    }
+    ctx.restore();
+  }
+}
 function render() {
   ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
   ctx.clearRect(0, 0, view.w, view.h);
@@ -991,6 +1044,7 @@ function render() {
   drawField();
   drawPowerups();
   drawSeeker();
+  drawKids();
   drawRevengeHiders();
   drawPlayer();
   ctx.restore();
@@ -1123,8 +1177,13 @@ function updateSeeker(dt) {
   var cfg = seekerCfg(), k = S.seeker, p = S.player;
   var speed = cfg.seekSpd;
   var target = null, arrive = 10;
+  var boltKid = nearestBoltingKid();
   if (S.chase) {
     target = { x: p.x, y: p.y };
+    speed = cfg.chaseSpd;
+    arrive = 24;
+  } else if (boltKid) {
+    target = { x: boltKid.x, y: boltKid.y };
     speed = cfg.chaseSpd;
     arrive = 24;
   } else if (k.checking) {
@@ -1148,7 +1207,9 @@ function updateSeeker(dt) {
       /* caught */
       if (d < 26) { foundRound(); return; }
     } else if (k.checking) {
+      var firstCheck = k.checkT === 0;
       k.checkT += dt;
+      if (firstCheck) boltKidAtSpot(k.checking.spotId);
       var sp = null;
       for (var i = 0; i < SPOTS.length; i++) if (SPOTS[i].id === k.checking.spotId) sp = SPOTS[i];
       if (sp) {
@@ -1165,6 +1226,10 @@ function updateSeeker(dt) {
   /* bump catch: seeker walks into the player while patrolling */
   if (!S.chase && S.state === "seek") {
     if (Math.hypot(p.x - k.x, p.y - k.y) < 24) { foundRound(); return; }
+    for (var bi = 0; bi < S.kids.length; bi++) {
+      var bk = S.kids[bi];
+      if (bk.state === "bolt" && !(bk.grace > 0) && Math.hypot(bk.x - k.x, bk.y - k.y) < 24) { catchKid(bk); }
+    }
   }
   /* schedule the next spot check */
   if (!S.chase && !k.checking) {
@@ -1175,6 +1240,125 @@ function updateSeeker(dt) {
       var cx = 210 - sp2.x, cy = 360 - sp2.y, cl = Math.hypot(cx, cy) || 1;
       k.checking = { x: sp2.x + cx / cl * 58, y: sp2.y + cy / cl * 58, spotId: sp2.id };
       k.checkT = 0;
+    }
+  }
+}
+
+/* ================= villagers watching from the edges ================= */
+var CROWD = (function() {
+  var cols = ["#e67e22", "#2470c9", "#e5639a", "#7b1fa2", "#00838f", "#c62828", "#5d4037", "#1565c0", "#6d4c41"];
+  var arr = [];
+  for (var i = 0; i < 9; i++) arr.push({ x: 24 + i * 44, y: 22, color: cols[i % cols.length], emoji: i === 1 ? "👵" : (i === 5 ? "👴" : null) });
+  for (var j = 0; j < 9; j++) arr.push({ x: 24 + j * 36, y: 708, color: cols[(j + 3) % cols.length], emoji: j === 4 ? "🧕" : null });
+  return arr;
+})();
+function cheerCrowd(mood) { S.crowdT = 2.5; S.crowdMood = mood || "cheer"; }
+function drawCrowd() {
+  for (var ci = 0; ci < CROWD.length; ci++) {
+    var c = CROWD[ci];
+    var cheer = S.crowdT > 0 && S.crowdMood === "cheer";
+    var bounce = cheer ? Math.abs(Math.sin(S.bob * 10 + ci)) * 6 : Math.sin(S.bob * 2 + ci) * 1;
+    var cy = c.y - bounce;
+    ctx.fillStyle = c.color;
+    ctx.beginPath(); ctx.arc(c.x, cy, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#f1c27d";
+    ctx.beginPath(); ctx.arc(c.x, cy - 9, 5, 0, Math.PI * 2); ctx.fill();
+    if (c.emoji) { ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.fillText(c.emoji, c.x, cy - 14); }
+    if (cheer) {
+      ctx.strokeStyle = "#17301c"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(c.x - 6, cy - 2); ctx.lineTo(c.x - 10, cy - 10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(c.x + 6, cy - 2); ctx.lineTo(c.x + 10, cy - 10); ctx.stroke();
+    }
+  }
+  if (S.crowdT > 0 && S.crowdMood === "cheer") {
+    ctx.font = "20px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("👏", 210, 52);
+  }
+  if (S.crowdT > 0 && S.crowdMood === "gasp") {
+    ctx.font = "16px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("😮", CROWD[0].x, CROWD[0].y - 22);
+    ctx.fillText("😮", CROWD[4].x, CROWD[4].y - 22);
+    ctx.fillText("😮", CROWD[8].x, CROWD[8].y - 22);
+  }
+}
+
+/* ================= AI kids hiding alongside you ================= */
+var KID_DEFS = [
+  { emoji: "🧒", color: "#e67e22" },
+  { emoji: "👧", color: "#e5639a" },
+  { emoji: "🧑", color: "#2470c9" }
+];
+function spawnKids() {
+  var spots = SPOTS.slice();
+  var kids = [];
+  for (var i = 0; i < 3; i++) {
+    var sp = spots.splice(Math.floor(Math.random() * spots.length), 1)[0];
+    kids.push({ spotId: sp.id, x: 210 + (i - 1) * 24, y: 150, emoji: KID_DEFS[i].emoji, color: KID_DEFS[i].color, state: "run" });
+  }
+  return kids;
+}
+function kidSpot(k) {
+  for (var i = 0; i < SPOTS.length; i++) if (SPOTS[i].id === k.spotId) return SPOTS[i];
+  return null;
+}
+function kidsSafeCount() {
+  var n = 0;
+  for (var i = 0; i < S.kids.length; i++) if (S.kids[i].state === "safe") n++;
+  return n;
+}
+function boltKidAtSpot(spotId) {
+  for (var i = 0; i < S.kids.length; i++) {
+    var k = S.kids[i];
+    if (k.spotId === spotId && k.state === "hide") {
+      k.state = "bolt"; k.grace = 1.2;
+      /* head start toward base so the kid has a real chance to escape */
+      var hx = COUNT_SPOT.x - k.x, hy = COUNT_SPOT.y - k.y, hd = Math.hypot(hx, hy) || 1;
+      k.x += hx / hd * 60; k.y += hy / hd * 60;
+      showBanner(T[S.lang].kidBolt);
+      sndSpot();
+    }
+  }
+}
+function nearestBoltingKid() {
+  var best = null, bd = 1e9;
+  for (var i = 0; i < S.kids.length; i++) {
+    var k = S.kids[i];
+    if (k.state !== "bolt") continue;
+    var d = Math.hypot(k.x - S.seeker.x, k.y - S.seeker.y);
+    if (d < bd) { bd = d; best = k; }
+  }
+  return best;
+}
+function catchKid(k) {
+  if (k.state !== "bolt") return;
+  k.state = "caught";
+  cheerCrowd("gasp");
+  showBanner(T[S.lang].kidCaught);
+  sndFound();
+}
+function updateKids(dt, phase) {
+  for (var i = 0; i < S.kids.length; i++) {
+    var k = S.kids[i];
+    if (phase === "hide" && k.state === "run") {
+      var sp = kidSpot(k);
+      if (!sp) { k.state = "hide"; continue; }
+      var dx = sp.x - k.x, dy = sp.y - k.y, d = Math.hypot(dx, dy);
+      if (d < 10) { k.state = "hide"; k.x = sp.x; k.y = sp.y; }
+      else { var step = Math.min(d, 130 * dt); k.x += dx / d * step; k.y += dy / d * step; }
+    } else if (phase === "seek" && k.state === "bolt") {
+      if (k.grace > 0) k.grace -= dt;
+      var bx = COUNT_SPOT.x - k.x, by = COUNT_SPOT.y - k.y, bd = Math.hypot(bx, by);
+      var spd = seekerCfg().chaseSpd * 0.85;
+      if (bd < 30) {
+        k.state = "safe";
+        S.kidsBonus += 5; SAVE.coins += 5; persist();
+        cheerCrowd("cheer");
+        showBanner(T[S.lang].kidSafe);
+        sndCoin();
+      } else {
+        var st = Math.min(bd, spd * dt);
+        k.x += bx / bd * st; k.y += by / bd * st;
+      }
     }
   }
 }
@@ -1268,8 +1452,10 @@ function collectPowerups() {
 var _lastTickSec = -1;
 function update(dt) {
   S.bob += dt * 0.4;
+  if (S.crowdT > 0) S.crowdT = Math.max(0, S.crowdT - dt);
   if (S.state === "hide") {
     updatePlayer(dt);
+    updateKids(dt, "hide");
     var prev = Math.ceil(S.hideTime);
     S.hideTime -= dt;
     var now = Math.ceil(S.hideTime);
@@ -1277,8 +1463,11 @@ function update(dt) {
     if (S.hideTime <= 0) { startSeek(); }
   } else if (S.state === "seek") {
     updatePlayer(dt);
+    /* base-run: reach the counting spot and the round is won (King–Thief rule) */
+    if (Math.hypot(S.player.x - COUNT_SPOT.x, S.player.y - COUNT_SPOT.y) < 30) { winRound(true); return; }
     updateSeeker(dt);
     if (S.state !== "seek") return; /* foundRound may have ended the round */
+    updateKids(dt, "seek");
     updateSpotted(dt);
     if (S.state !== "seek") return;
     S.seekTime -= dt;
@@ -1396,6 +1585,7 @@ function setupRound() {
   S.checkTimer = diffCfg().checkEvery;
   S.hideTime = diffCfg().hideTime;
   S.powerups = []; S.fx = { ghost: 0, speed: 0, silent: 0 }; S.fxSpawned = false;
+  S.kids = spawnKids(); S.kidsBonus = 0;
   if (S.round === 1) { if (S.startGhost) S.fx.ghost = 10; if (S.startSpeed) S.fx.speed = 10; }
   S.state = "hide"; S.paused = false;
   joyHide();
@@ -1470,10 +1660,13 @@ function endRevenge(won) {
     endMatch();
   }
 }
-function winRound() {
+function winRound(base) {
   if (S.state !== "seek") return;
+  cheerCrowd("cheer");
   var perfect = S.maxSpotted < 30;
   var coins = COIN_ROUND + (perfect ? COIN_PERFECT : 0);
+  if (base) coins += 15;
+  /* kids bonus only counts friends who reached base during the round — see updateKids */
   S.roundCoins = coins; S.matchCoins += coins;
   SAVE.coins += coins; SAVE.roundsWon++; S.roundsSurvived++;
   if (perfect) { S.perfectCount++; S.perfectStreak++; } else { S.perfectStreak = 0; }
@@ -1490,9 +1683,9 @@ function winRound() {
   joyHide(); el("readyBtn").hidden = true;
   var t = T[S.lang];
   el("roundTitle").textContent = t.roundWin;
-  el("roundText").textContent = t.roundWinText + (perfect ? t.perfectTag : "");
+  el("roundText").textContent = (base ? t.baseWinText : t.roundWinText) + (perfect ? t.perfectTag : "");
   el("roundCoins").textContent = t.roundCoins(coins, SAVE.coins);
-  el("roundStats").textContent = t.roundStats(S.lives, S.roundsSurvived);
+  el("roundStats").textContent = t.roundStats(S.lives, S.roundsSurvived) + " · " + t.kidsStats(kidsSafeCount(), S.kidsBonus);
   el("roundNextBtn").textContent = matchOver() ? t.matchWin : t.nextRound;
   hideAllOverlays();
   el("roundOverlay").hidden = false;
@@ -1500,6 +1693,7 @@ function winRound() {
 }
 function foundRound() {
   if (S.state !== "seek") return;
+  cheerCrowd("gasp");
   S.lives--;
   S.roundCoins = 0;
   S.roundResults.push("L");
@@ -1511,7 +1705,7 @@ function foundRound() {
   el("roundTitle").textContent = t.roundFound;
   el("roundText").textContent = t.roundFoundText;
   el("roundCoins").textContent = t.roundCoins(0, SAVE.coins);
-  el("roundStats").textContent = t.roundStats(S.lives, S.roundsSurvived);
+  el("roundStats").textContent = t.roundStats(S.lives, S.roundsSurvived) + " · " + t.kidsStats(kidsSafeCount(), S.kidsBonus);
   el("roundNextBtn").textContent = matchOver() ? t.matchWin : t.nextRound;
   hideAllOverlays();
   el("roundOverlay").hidden = false;
