@@ -1,0 +1,1535 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>লুকোচুরি · খেলাঘর (Khelaghor)</title>
+    <!-- No external fonts: system fonts only, so the game loads fast and works offline. -->
+    <style>
+      :root {
+        color-scheme: light dark;
+        --ink: #17301c;
+        --ink-soft: #3c5a42;
+        --paper: #fffdf4;
+        --card: #ffffff;
+        --accent: #e4572e;
+        --accent-dark: #c7431f;
+        --gold: #f2b01e;
+        --gold-dark: #b97e06;
+        --green: #1e8a49;
+        --green-dark: #146636;
+        --red: #d63c2f;
+        --bar-bg: rgba(255, 253, 244, 0.96);
+        --shadow: 0 6px 20px rgba(20, 50, 25, 0.22);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #eaf5ec;
+          --ink-soft: #b9d4be;
+          --paper: #12241a;
+          --card: #1b3324;
+          --bar-bg: rgba(18, 36, 26, 0.96);
+          --shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: "Hind Siliguri", system-ui, sans-serif;
+        color: var(--ink);
+        background: #3f9142;
+        overflow: hidden;
+        overscroll-behavior: none;
+      }
+      button { touch-action: manipulation; }
+      #app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+      /* ---------- top bar ---------- */
+      #topbar {
+        position: relative; z-index: 5;
+        display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+        padding: calc(6px + env(safe-area-inset-top)) 6px 6px;
+        background: var(--bar-bg);
+        border-bottom: 3px solid var(--green-dark);
+      }
+      #topbar .match-tag {
+        flex: 0 1 auto; min-width: 0;
+        font-family: "Baloo Da 2", "Hind Siliguri", sans-serif;
+        font-weight: 800; font-size: 13px; line-height: 1.05;
+        color: var(--green-dark); white-space: nowrap; text-align: center;
+      }
+      #topbar .match-tag small { display: block; font-size: 9.5px; font-weight: 700; color: var(--ink-soft); letter-spacing: .3px; }
+      @media (prefers-color-scheme: dark) { #topbar .match-tag { color: var(--gold); } #topbar .match-tag small { color: var(--ink-soft); } }
+      .score-chip {
+        flex: 1 0 auto; display: flex; align-items: center; justify-content: center; gap: 4px;
+        font-weight: 700; font-size: 12px; padding: 4px 7px;
+        border-radius: 999px; background: var(--card);
+        border: 2px solid rgba(0,0,0,0.08); white-space: nowrap; min-width: fit-content;
+      }
+      .score-chip b { font-size: 18px; font-family: "Baloo Da 2", sans-serif; line-height: 1; flex: none; }
+      .coin-chip {
+        flex: none; display: flex; align-items: center; gap: 3px;
+        font-family: "Baloo Da 2", sans-serif; font-weight: 800; font-size: 14px; line-height: 1;
+        background: linear-gradient(180deg, #ffd94d, var(--gold));
+        color: #4a2f00; border: 2px solid var(--gold-dark);
+        border-radius: 999px; padding: 3px 7px 3px 5px; cursor: pointer;
+        min-height: 34px; white-space: nowrap;
+      }
+      .coin-chip.pop { animation: coinpop .3s ease; }
+      @keyframes coinpop { 40% { transform: scale(1.18); } }
+      .icon-btn {
+        flex: none; width: 36px; height: 36px;
+        border-radius: 10px; border: 2px solid rgba(0,0,0,0.10);
+        background: var(--card); color: var(--ink);
+        font-family: inherit; font-weight: 700; font-size: 14px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        padding: 0;
+      }
+      .icon-btn:active { transform: scale(0.92); }
+      @media (max-width: 520px) {
+        #topbar { gap: 3px; padding-left: 5px; padding-right: 5px; }
+        #topbar .match-tag { font-size: 11px; }
+        #topbar .match-tag small { font-size: 8.5px; }
+        .score-chip { font-size: 11px; gap: 3px; padding: 3px 6px; }
+        .score-chip b { font-size: 16px; }
+        .coin-chip { font-size: 13px; padding: 2px 6px 2px 4px; min-height: 30px; }
+        .icon-btn { width: 32px; height: 32px; font-size: 12.5px; border-radius: 9px; }
+      }
+      /* ---------- tottho-mama style motion: slow, small, warm (no bounce) ---------- */
+      .cta, .seg button, .big-btn, .icon-btn, .coin-chip { transition: transform .18s ease, box-shadow .18s ease; }
+      .cta:hover, .cta:active { transform: translateY(-4px); box-shadow: 0 12px 26px rgba(20, 50, 25, 0.30); }
+      .seg button:hover, .seg button:active { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(20, 50, 25, 0.18); }
+      .big-btn:hover, .big-btn:active { transform: translateY(-4px); }
+      .icon-btn:hover, .icon-btn:active, .coin-chip:hover, .coin-chip:active { transform: translateY(-2px); }
+      /* menu mascot: blinks, waves, floats gently (like the তথ্য মামা hero) */
+      .mascot { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 2px 0 0; }
+      .m-face { position: relative; width: 64px; height: 64px; border-radius: 50%; background: #ffd9a0; border: 3px solid var(--green-dark); animation: mFloat 3s ease-in-out infinite; flex: none; }
+      .m-eye { position: absolute; top: 24px; width: 9px; height: 12px; border-radius: 50%; background: #17301c; animation: mBlink 4.2s ease-in-out infinite; }
+      .m-eye.l { left: 15px; } .m-eye.r { right: 15px; }
+      .m-smile { position: absolute; left: 50%; bottom: 13px; width: 22px; height: 11px; border-bottom: 3px solid #17301c; border-radius: 0 0 22px 22px; transform: translateX(-50%); }
+      @keyframes mBlink { 0%, 90%, 96%, 100% { transform: scaleY(1); } 93% { transform: scaleY(0.12); } }
+      @keyframes mFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+      .m-hand { font-size: 30px; display: inline-block; transform-origin: 70% 80%; animation: mWave 2.6s ease-in-out infinite; }
+      @keyframes mWave { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-18deg); } }
+      .m-bubble { background: var(--card); border: 2px solid rgba(0,0,0,0.10); border-radius: 14px; padding: 6px 10px; font-size: 13.5px; font-weight: 700; color: var(--ink-soft); }
+      /* staggered fade-up for card children: the page gently wakes up */
+      .card > * { animation: fadeUp .35s ease both; }
+      .card > *:nth-child(1) { animation-delay: 0s; }
+      .card > *:nth-child(2) { animation-delay: .05s; }
+      .card > *:nth-child(3) { animation-delay: .10s; }
+      .card > *:nth-child(4) { animation-delay: .15s; }
+      .card > *:nth-child(5) { animation-delay: .20s; }
+      .card > *:nth-child(6) { animation-delay: .25s; }
+      .card > *:nth-child(7) { animation-delay: .30s; }
+      .card > *:nth-child(8) { animation-delay: .35s; }
+      .card > *:nth-child(9) { animation-delay: .40s; }
+      @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      /* floating leaves behind the menu card */
+      .overlay .card { position: relative; z-index: 1; }
+      .float-ico { position: absolute; font-size: 26px; opacity: .55; pointer-events: none; animation: mDrift 6s ease-in-out infinite; }
+      @keyframes mDrift { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-10px) rotate(4deg); } }
+      @media (prefers-reduced-motion: reduce) { .m-face, .m-eye, .m-hand, .float-ico, .card > * { animation: none; } }
+      @media (max-width: 380px) {
+        #topbar .match-tag small { display: none; }
+        #topbar .match-tag { font-size: 10.5px; }
+        .score-chip { font-size: 10.5px; padding: 3px 5px; }
+        .score-chip b { font-size: 15px; }
+        .coin-chip { font-size: 12px; }
+        .icon-btn { width: 30px; height: 30px; font-size: 11.5px; }
+      }
+      /* ---------- status strip ---------- */
+      #statusbar {
+        position: relative; z-index: 5; text-align: center;
+        font-weight: 600; font-size: 15px; padding: 5px 12px;
+        background: var(--gold); color: #4a2f00; min-height: 30px;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+      }
+      #statusbar.danger { background: var(--red); color: #fff; }
+      #statusbar.hide-phase { background: var(--green); color: #fff; }
+      #statusText { flex: 1; min-width: 0; }
+      #statusbar .timer-tag { font-size: 13px; font-weight: 800; background: rgba(15,40,20,.30); color: #fff; border-radius: 999px; padding: 1px 9px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      #statusbar .timer-tag.low { background: var(--red); }
+      #statusbar .spot-tag { font-size: 12.5px; font-weight: 800; background: rgba(255,255,255,.35); border-radius: 999px; padding: 1px 9px; white-space: nowrap; }
+      #statusbar .spot-tag.hot { background: var(--red); color: #fff; }
+      /* ---------- field ---------- */
+      #field-wrap { position: relative; flex: 1; min-height: 0; }
+      canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+      /* ---------- joystick ---------- */
+      #joy {
+        position: absolute; z-index: 7; width: 116px; height: 116px;
+        border-radius: 50%; border: 3px solid rgba(255,255,255,.55);
+        background: rgba(10, 35, 16, .28);
+        transform: translate(-50%, -50%);
+        pointer-events: none; display: none;
+      }
+      #joyNub {
+        position: absolute; left: 50%; top: 50%;
+        width: 52px; height: 52px; border-radius: 50%;
+        background: rgba(255,255,255,.88);
+        border: 3px solid rgba(20,60,30,.35);
+        transform: translate(-50%, -50%);
+        box-shadow: 0 4px 12px rgba(0,0,0,.3);
+      }
+      /* ---------- floating controls ---------- */
+      #controls {
+        position: absolute; left: 0; right: 0;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        z-index: 6; display: flex; align-items: flex-end; justify-content: center;
+        pointer-events: none; padding: 0 16px;
+      }
+      .big-btn {
+        pointer-events: auto;
+        font-family: "Baloo Da 2", "Hind Siliguri", sans-serif;
+        font-weight: 800; border: none; cursor: pointer; color: #fff;
+        box-shadow: var(--shadow); touch-action: none; user-select: none; -webkit-user-select: none;
+      }
+
+      #readyBtn {
+        font-size: 22px; padding: 0 34px; height: 62px; border-radius: 999px;
+        background: var(--green); border-bottom: 6px solid var(--green-dark);
+        animation: pulse 0.9s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from { box-shadow: 0 6px 20px rgba(20, 50, 25, 0.22), 0 0 0 0 rgba(30,138,73, 0.45); }
+        to { box-shadow: 0 6px 20px rgba(20, 50, 25, 0.22), 0 0 0 12px rgba(30,138,73, 0); }
+      }
+      @media (prefers-reduced-motion: reduce) { #readyBtn { animation: none; } .coin-chip.pop { animation: none; } }
+      /* ---------- banner ---------- */
+      #banner {
+        position: absolute; left: 50%; top: 32%;
+        transform: translate(-50%, -50%) scale(0.8); z-index: 8;
+        font-family: "Baloo Da 2", "Hind Siliguri", sans-serif;
+        font-weight: 800; font-size: 40px; color: #fff;
+        text-shadow: 0 3px 0 rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.4);
+        opacity: 0; pointer-events: none; text-align: center; width: 94%;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+      }
+      #banner.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      #banner small { display: block; font-size: 19px; font-weight: 700; }
+      /* ---------- overlays ---------- */
+      .overlay {
+        position: absolute; inset: 0; z-index: 10;
+        background: rgba(10, 30, 14, 0.55);
+        display: flex; align-items: flex-start; justify-content: center;
+        overflow-y: auto; padding: 14px 10px calc(20px + env(safe-area-inset-bottom));
+      }
+      .overlay[hidden] { display: none; }
+      .card {
+        width: 100%; max-width: 430px; margin: auto;
+        background: var(--paper); color: var(--ink);
+        border-radius: 22px; padding: 18px 16px 16px;
+        box-shadow: var(--shadow); text-align: center;
+        border: 3px solid var(--green-dark);
+        animation: cardIn .18s ease;
+      }
+      @keyframes cardIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      .card h1 { font-family: "Baloo Da 2", sans-serif; font-size: 40px; margin: 2px 0 2px; color: var(--green-dark); line-height: 1; }
+      .card h1 .en { display: block; font-size: 15px; letter-spacing: 4px; color: var(--ink-soft); margin-top: 4px; }
+      .card h2 { font-family: "Baloo Da 2", sans-serif; font-size: 26px; margin: 2px 0 6px; }
+      .card p { margin: 6px 0; font-size: 15.5px; line-height: 1.45; }
+      .mini-note { font-size: 12.5px; color: var(--ink-soft); }
+      .stat-row { display: flex; gap: 6px; margin: 10px 0 4px; }
+      .stat-box { flex: 1; background: var(--card); border: 2px solid rgba(0,0,0,0.07); border-radius: 14px; padding: 7px 2px; }
+      .stat-box .n { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); }
+      .stat-box .v { font-family: "Baloo Da 2", sans-serif; font-size: 20px; font-weight: 800; }
+      .btn-col { display: flex; flex-direction: column; gap: 6px; align-items: center; margin-top: 8px; }
+      .cta {
+        font-family: "Baloo Da 2", sans-serif; font-weight: 800; font-size: 19px;
+        min-width: 250px; max-width: 100%; padding: 11px 22px; border-radius: 999px;
+        border: none; border-bottom: 5px solid var(--green-dark);
+        background: var(--green); color: #fff; cursor: pointer;
+      }
+
+      .cta.orange { background: var(--accent); border-bottom-color: var(--accent-dark); }
+      .cta.ghost { background: var(--card); color: var(--ink); border: 2px solid rgba(0,0,0,0.14); border-bottom-width: 4px; }
+      .seg-label { font-weight: 800; font-size: 14px; margin: 12px 0 5px; }
+      .seg { display: flex; gap: 6px; }
+      .seg button {
+        flex: 1; padding: 8px 4px; border-radius: 14px; cursor: pointer;
+        border: 2px solid rgba(0,0,0,0.12); background: var(--card); color: var(--ink);
+        font-family: inherit;
+      }
+      .seg button .dname { display: block; font-family: "Baloo Da 2", sans-serif; font-weight: 800; font-size: 16px; }
+      .seg button .dsub { display: block; font-size: 11px; color: var(--ink-soft); }
+      .seg button.on { border-color: var(--green); background: #dff3e4; }
+      @media (prefers-color-scheme: dark) { .seg button.on { background: #1d4a2c; } }
+      .rules { text-align: left; margin: 12px 0 4px; padding-left: 2px; list-style: none; font-size: 14.5px; line-height: 1.5; }
+      .rules li { margin: 7px 0; padding-left: 4px; }
+      .final-scores { display: flex; gap: 10px; justify-content: center; margin: 12px 0 2px; }
+      .final-scores .fs { flex: 1; max-width: 150px; border-radius: 16px; padding: 10px 6px; background: var(--card); border: 2px solid rgba(0,0,0,0.07); }
+      .final-scores .fs .n { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+      .final-scores .fs .v { font-family: "Baloo Da 2", sans-serif; font-size: 36px; font-weight: 800; }
+      /* ---------- v2: player card, achievements, fx tag ---------- */
+      .player-card { background: var(--card); border: 2px solid rgba(0,0,0,0.07); border-radius: 16px; padding: 10px 10px 8px; margin: 10px 0 4px; }
+      .pc-row { display: flex; align-items: center; gap: 8px; }
+      .pc-row label { font-weight: 800; font-size: 13.5px; white-space: nowrap; }
+      #playerName { flex: 1; min-width: 0; font: inherit; font-weight: 700; font-size: 15px; color: var(--ink); background: var(--paper); border: 2px solid rgba(0,0,0,0.14); border-radius: 999px; padding: 7px 12px; outline: none; }
+      #playerName:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(30,138,73,.18); }
+      .player-card .seg-label { margin: 10px 0 5px; }
+      .ach-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0 2px; }
+      .ach-chip { font-size: 12px; font-weight: 700; background: var(--card); border: 2px solid rgba(0,0,0,0.08); border-radius: 999px; padding: 4px 9px; color: var(--ink-soft); }
+      .ach-chip.got { border-color: var(--gold-dark); background: #fff7d6; color: #6b4e00; }
+      @media (prefers-color-scheme: dark) { .ach-chip.got { background: #4a3a00; color: #ffd97a; } }
+      #roundDots { font-size: 12px; letter-spacing: 2px; white-space: nowrap; }
+      .fx-tag { font-size: 12.5px; font-weight: 800; background: rgba(255,255,255,.35); border-radius: 999px; padding: 1px 9px; white-space: nowrap; }
+      .card > *:nth-child(10) { animation-delay: .45s; }
+      .card > *:nth-child(11) { animation-delay: .50s; }
+      @media (max-width: 380px) {
+        .card { padding: 16px 12px 14px; }
+        .card h1 { font-size: 34px; }
+        .cta { font-size: 17px; min-width: 220px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="topbar">
+        <span class="match-tag"><span id="matchTag">রাউন্ড ১/৩</span><small id="diffTag">মাঝারি</small></span>
+        <div class="score-chip"><span>❤️</span><span id="livesLabel">জীবন</span><b id="livesCount">৩</b></div>
+        <div class="score-chip"><span>🏆</span><span id="roundsLabel">রাউন্ড জয়</span><b id="roundsWon">০</b></div>
+        <button class="coin-chip" id="coinChip" aria-label="Coins">🪙<span id="coinCount">০</span></button>
+        <button class="icon-btn" id="pauseBtn" aria-label="Pause">⏸</button>
+        <button class="icon-btn" id="soundBtn" aria-label="Sound">🔊</button>
+        <button class="icon-btn" id="langBtn" aria-label="Language">EN</button>
+      </div>
+      <div id="statusbar"><span id="roundDots" aria-hidden="true"></span><span id="statusText">লুকোচুরি খেলতে তৈরি হও!</span><span class="spot-tag" id="spotTag" hidden></span><span class="fx-tag" id="fxTag" hidden></span><span class="timer-tag" id="timerTag" hidden>⏱ ০:১০</span></div>
+
+      <div id="field-wrap">
+        <canvas id="game"></canvas>
+
+        <div id="joy"><div id="joyNub"></div></div>
+        <div id="banner"></div>
+
+        <div id="controls">
+          <button class="big-btn" id="readyBtn" hidden>🙈 লুকিয়ে গেছি!</button>
+        </div>
+
+        <!-- MENU -->
+        <div class="overlay" id="menuOverlay">
+          <span class="float-ico" style="top:10%;left:6%">🌿</span>
+          <span class="float-ico" style="top:16%;right:8%;animation-delay:1.2s">🏠</span>
+          <span class="float-ico" style="bottom:14%;left:10%;animation-delay:2s">🌾</span>
+          <span class="float-ico" style="bottom:20%;right:6%;animation-delay:.6s">🍃</span>
+          <div class="card">
+            <div class="mascot" aria-hidden="true">
+              <div class="m-face"><span class="m-eye l"></span><span class="m-eye r"></span><span class="m-smile"></span></div>
+              <span class="m-hand">👋</span>
+              <span class="m-bubble">চুপচাপ লুকাও!</span>
+            </div>
+            <h1>লুকোচুরি<span class="en">LUKOCHURI · HIDE &amp; SEEK</span></h1>
+            <p id="menuIntro">গ্রামের উঠোনে লুকোচুরি! তুমি লুকাবে, আর খোঁজার লোকটা তোমাকে খুঁজবে। ভালো জায়গায় চুপচাপ লুকিয়ে থাকলে জিতবে — নড়াচড়া করলেই ধরা!</p>
+            <div class="player-card">
+              <div class="pc-row"><label id="playerNameLabel" for="playerName">তোমার নাম</label><input id="playerName" maxlength="12" value="খেলোয়াড়" autocomplete="off" /></div>
+              <div class="seg-label" id="charLabel">চরিত্র বেছে নাও</div>
+              <div class="seg char-seg" id="charSeg">
+                <button data-char="roni" class="on"><span class="dname">🏃 রনি</span><small class="dsub">সব দিক সমান</small></button>
+                <button data-char="dour"><span class="dname">⚡ দৌড়বাজ</span><small class="dsub">১২% দ্রুত</small></button>
+                <button data-char="chup"><span class="dname">🤫 চুপচাপ</span><small class="dsub">ধরা পড়া ২০% ধীর</small></button>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-box"><div class="n" id="statCoinsLabel">কয়েন</div><div class="v">🪙 <span id="menuCoins">০</span></div></div>
+              <div class="stat-box"><div class="n" id="statBestLabel">সেরা (রাউন্ড)</div><div class="v" id="menuBest">০</div></div>
+              <div class="stat-box"><div class="n" id="statWinsLabel">ম্যাচ জয়</div><div class="v" id="menuWins">০</div></div>
+              <div class="stat-box"><div class="n" id="statRoundsLabel">মোট রাউন্ড জয়</div><div class="v">🏆 <span id="menuRounds">০</span></div></div>
+            </div>
+            <div class="seg-label" id="achLabel">অ্যাচিভমেন্ট</div>
+            <div class="ach-row" id="achRow"></div>
+            <div class="seg-label" id="diffLabel">কঠিনতা বেছে নাও</div>
+            <div class="seg" id="diffSeg">
+              <button data-diff="easy"><span class="dname">সহজ</span><small class="dsub">ধীর খোঁজারু</small></button>
+              <button data-diff="medium" class="on"><span class="dname">মাঝারি</span><small class="dsub">স্বাভাবিক</small></button>
+              <button data-diff="hard"><span class="dname">কঠিন</span><small class="dsub">দ্রুত + চোখা</small></button>
+            </div>
+            <ul class="rules" id="rulesList">
+              <li>🙈 <b>লুকানোর সময়</b> — জয়স্টিক/কিবোর্ড দিয়ে দৌড়ে খড়ের গাদা, গাছ, ঘর, গাড়ি, ঝোপ বা পুকুর পাড়ে লুকাও।</li>
+              <li>🔍 খোঁজারু চোখ বন্ধ করে গুনবে, তারপর <b>আলো-চোখ (vision cone)</b> নিয়ে খুঁজতে বেরোবে।</li>
+              <li>👁️ তার চোখের সামনে <b>নড়লেই</b> ধরা পড়ার মিটার বাড়বে! ভালো জায়গায় <b>চুপচাপ</b> থাকলে মিটার কমবে।</li>
+              <li>🏃 খোঁজারু দূরে তাকালে <b>চুপিসারে</b> অন্য জায়গায় সরে যাও — কিন্তু তার চোখে পড়লেই বিপদ!</li>
+              <li>⏱️ খোঁজার সময় শেষ হওয়া পর্যন্ত বেঁচে থাকলেই রাউন্ড জয়! ৫ রাউন্ডের ম্যাচ, ৩টি জীবন।</li>
+            </ul>
+            <div class="btn-col">
+              <button class="cta" id="startBtn">খেলা শুরু ▶</button>
+              <button class="cta ghost" id="backBtn">🏠 খেলাঘর · মেনু</button>
+            </div>
+            <p class="mini-note" id="menuNote">৫ রাউন্ডের ম্যাচ · ৩টি জীবন · কয়েন আর সেরা স্কোর এই ডিভাইসে সেভ থাকে</p>
+          </div>
+        </div>
+
+        <!-- PAUSE -->
+        <div class="overlay" id="pauseOverlay" hidden>
+          <div class="card">
+            <h2 id="pauseTitle">⏸ বিরতি</h2>
+            <p id="pauseText">খেলা থামানো আছে।</p>
+            <div class="btn-col">
+              <button class="cta" id="resumeBtn">▶ আবার খেলো</button>
+              <button class="cta ghost" id="restartBtn">↻ ম্যাচ আবার শুরু</button>
+              <button class="cta ghost" id="quitBtn">🏠 মেনুতে যাও</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROUND END -->
+        <div class="overlay" id="roundOverlay" hidden>
+          <div class="card">
+            <h2 id="roundTitle">রাউন্ড জিতেছো! 🎉</h2>
+            <p id="roundText"></p>
+            <p class="mini-note" id="roundCoins"></p>
+            <p class="mini-note" id="roundStats"></p>
+            <div class="btn-col">
+              <button class="cta" id="roundNextBtn">পরের রাউন্ড ▶</button>
+              <button class="cta ghost" id="roundMenuBtn">🏠 মেনুতে যাও</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MATCH END -->
+        <div class="overlay" id="endOverlay" hidden>
+          <div class="card">
+            <h2 id="endTitle">ম্যাচ জিতেছো! 🏆</h2>
+            <p id="endText"></p>
+            <div class="final-scores">
+              <div class="fs"><div class="n" id="fsRoundsLabel">রাউন্ড জয়</div><div class="v" id="fsRounds">০</div></div>
+              <div class="fs"><div class="n" id="fsLivesLabel">জীবন বাকি</div><div class="v" id="fsLives">০</div></div>
+            </div>
+            <p class="mini-note" id="endCoins"></p>
+            <p class="mini-note" id="endStats"></p>
+            <p class="mini-note" id="endAch" hidden></p>
+            <div class="btn-col">
+              <button class="cta" id="rematchBtn">🔁 রিম্যাচ · আবার এই ম্যাচ</button>
+              <button class="cta ghost" id="endMenuBtn">🏠 মেনুতে যাও</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+<script>
+"use strict";
+/* ================= persistent save (this device) — Lukochuri only ================= */
+var SAVE_KEY = "lukochuri_save_v1";
+var SAVE = {
+  coins: 0, best: 0, wins: 0, matches: 0, roundsWon: 0,
+  lang: "bn", sound: true, diff: "medium",
+  name: "খেলোয়াড়", char: "roni", ach: []
+};
+try {
+  var raw = localStorage.getItem(SAVE_KEY);
+  if (raw) { var parsed = JSON.parse(raw); for (var k in SAVE) if (parsed[k] !== undefined) SAVE[k] = parsed[k]; }
+} catch (e) {}
+function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
+
+/* ================= i18n ================= */
+var BN_NUM = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"];
+function num(n) { if (S.lang === "bn") return String(n).replace(/[0-9]/g, function(d){ return BN_NUM[+d]; }); return String(n); }
+var T = {
+  bn: {
+    round: function(r){ return "রাউন্ড " + num(r) + "/৫"; },
+    diffNames: { easy: "সহজ", medium: "মাঝারি", hard: "কঠিন" },
+    lives: "জীবন", roundsWon: "রাউন্ড জয়",
+    ready: "লুকোচুরি খেলতে তৈরি হও!",
+    hidePhase: "লুকাও! খোঁজারু গুনছে…",
+    hideHint: "ভালো জায়গায় লুকাও — নড়ো না!",
+    seekPhase: "খোঁজারু খুঁজছে! চুপচাপ থাকো!",
+    spottedTag: function(p){ return "👁 দেখা যাচ্ছে " + num(p) + "%"; },
+    hiddenTag: "🤫 লুকিয়ে আছো",
+    readyBtn: "🙈 লুকিয়ে গেছি!",
+    found: "ধরা পড়ে গেছো! 😖",
+    survived: "বেঁচে গেছো! 🎉",
+    roundWin: "রাউন্ড জিতেছো! 🎉",
+    roundFound: "এই রাউন্ডে ধরা পড়েছো 😖",
+    roundWinText: "খোঁজার সময় শেষ — খোঁজারু তোমাকে খুঁজে পায়নি!",
+    roundFoundText: "খোঁজারু তোমাকে দেখে ফেলেছে! একটা জীবন গেল।",
+    perfectTag: " · 🌟 পারফেক্ট লুকানো!",
+    roundCoins: function(c, total){ return "এই রাউন্ডে কয়েন: 🪙 +" + num(c) + " · মোট ব্যালেন্স: 🪙 " + num(total); },
+    roundStats: function(l, r){ return "জীবন বাকি: ❤️ " + num(l) + " · রাউন্ড জয়: 🏆 " + num(r) + "/৫"; },
+    matchWin: "ম্যাচ জিতেছো! 🏆",
+    matchLose: "ম্যাচ শেষ 😢",
+    matchWinText: "পাঁচ রাউন্ডেই বেঁচে গেছো — তুমি লুকোচুরির চ্যাম্পিয়ন!",
+    matchLoseText: "এবার ধরা পড়ে গেছো। পরের ম্যাচে আরও ভালো জায়গায় লুকিও!",
+    endCoins: function(earned, total, best){ return "এই ম্যাচে কয়েন: 🪙 +" + num(earned) + " · মোট ব্যালেন্স: 🪙 " + num(total) + " · সেরা: " + num(best) + " রাউন্ড"; },
+    endStats: function(w, m, rw){ return "মোট ম্যাচ জয়: " + num(w) + " · মোট ম্যাচ: " + num(m) + " · মোট রাউন্ড জয়: " + num(rw); },
+    startBtn: "খেলা শুরু ▶",
+    backBtn: "🏠 খেলাঘর · মেনু",
+    menuIntro: "গ্রামের উঠোনে লুকোচুরি! তুমি লুকাবে, আর খোঁজার লোকটা তোমাকে খুঁজবে। ভালো জায়গায় চুপচাপ লুকিয়ে থাকলে জিতবে — নড়াচড়া করলেই ধরা!",
+    menuNote: "৫ রাউন্ডের ম্যাচ · ৩টি জীবন · কয়েন আর সেরা স্কোর এই ডিভাইসে সেভ থাকে",
+    statCoins: "কয়েন", statBest: "সেরা (রাউন্ড)", statWins: "ম্যাচ জয়", statRounds: "মোট রাউন্ড জয়",
+    diffLabel: "কঠিনতা বেছে নাও",
+    diffSubs: { easy: "ধীর খোঁজারু", medium: "স্বাভাবিক", hard: "দ্রুত + চোখা" },
+    rules: [
+      "🙈 <b>লুকানোর সময়</b> — জয়স্টিক/কিবোর্ড দিয়ে দৌড়ে খড়ের গাদা, গাছ, ঘর, গাড়ি, ঝোপ বা পুকুর পাড়ে লুকাও।",
+      "🔍 খোঁজারু চোখ বন্ধ করে গুনবে, তারপর <b>আলো-চোখ (vision cone)</b> নিয়ে খুঁজতে বেরোবে।",
+      "👁️ তার চোখের সামনে <b>নড়লেই</b> ধরা পড়ার মিটার বাড়বে! ভালো জায়গায় <b>চুপচাপ</b> থাকলে মিটার কমবে।",
+      "🏃 খোঁজারু দূরে তাকালে <b>চুপিসারে</b> অন্য জায়গায় সরে যাও — কিন্তু তার চোখে পড়লেই বিপদ!",
+      "⏱️ খোঁজার সময় শেষ হওয়া পর্যন্ত বেঁচে থাকলেই রাউন্ড জয়! ৫ রাউন্ডের ম্যাচ, ৩টি জীবন।",
+      "✨ মাঠে <b>পাওয়ার-আপ</b> ভাসে — 👻 অদৃশ্য, ⚡ দ্রুত, 🔇 নীরব, 🪙 কয়েন! ছুঁলেই কাজ করবে।"
+    ],
+    pauseTitle: "⏸ বিরতি", pauseText: "খেলা থামানো আছে।",
+    resume: "▶ আবার খেলো", restart: "↻ ম্যাচ আবার শুরু", quit: "🏠 মেনুতে যাও",
+    nextRound: "পরের রাউন্ড ▶", rematch: "🔁 রিম্যাচ · আবার এই ম্যাচ",
+    roundsLabel: "রাউন্ড জয়", livesLabel: "জীবন বাকি",
+    counting: "খোঁজারু গুনছে…",
+    searching: "খোঁজারু খুঁজছে…",
+    chasing: "🏃 খোঁজারু তোমার দিকে আসছে! পালাও!",
+    spotNames: { hay: "খড়ের গাদা", tree: "বড় গাছ", house1: "বাড়ির পেছনে", cart: "গরুর গাড়ি", bush: "ঝোপ", pond: "পুকুর পাড়", house2: "ছোট ঘর", banana: "কলাগাছ", paddy: "ধানক্ষেত" },
+    defaultName: "খেলোয়াড়",
+    playerNameLabel: "তোমার নাম", charLabel: "চরিত্র বেছে নাও", achLabel: "অ্যাচিভমেন্ট",
+    charNames: { roni: "🏃 রনি", dour: "⚡ দৌড়বাজ", chup: "🤫 চুপচাপ" },
+    charSubs: { roni: "সব দিক সমান", dour: "১২% দ্রুত", chup: "ধরা পড়া ২০% ধীর" },
+    fxNames: { ghost: "👻 অদৃশ্য", speed: "⚡ দ্রুত", silent: "🔇 নীরব", coin: "🪙 কয়েন" },
+    puBanner: { ghost: "👻 অদৃশ্য! খোঁজারু তোমাকে দেখতে পাবে না", speed: "⚡ দ্রুত! ৬ সেকেন্ড দৌড়াও", silent: "🔇 নীরব! ধরা পড়া ধীর হয়ে গেল", coin: "🪙 +১০ কয়েন!" },
+    matchWinName: function(n){ return n + " ম্যাচ জিতেছো! 🏆"; },
+    matchLoseName: function(n){ return n + ", ম্যাচ শেষ 😢"; },
+    endAchText: function(list){ return "নতুন অ্যাচিভমেন্ট: " + list; }
+  },
+  en: {
+    round: function(r){ return "Round " + r + "/5"; },
+    diffNames: { easy: "Easy", medium: "Medium", hard: "Hard" },
+    lives: "Lives", roundsWon: "Rounds Won",
+    ready: "Get ready to play Lukochuri!",
+    hidePhase: "Hide! The seeker is counting…",
+    hideHint: "Find a good spot — and stay still!",
+    seekPhase: "The seeker is searching! Stay quiet!",
+    spottedTag: function(p){ return "👁 Spotted " + p + "%"; },
+    hiddenTag: "🤫 Hidden",
+    readyBtn: "🙈 I'm hidden!",
+    found: "You got caught! 😖",
+    survived: "You survived! 🎉",
+    roundWin: "Round won! 🎉",
+    roundFound: "Caught this round 😖",
+    roundWinText: "Seek time ran out — the seeker never found you!",
+    roundFoundText: "The seeker spotted you! You lost a life.",
+    perfectTag: " · 🌟 Perfect hide!",
+    roundCoins: function(c, total){ return "Coins this round: 🪙 +" + c + " · Balance: 🪙 " + total; },
+    roundStats: function(l, r){ return "Lives left: ❤️ " + l + " · Rounds won: 🏆 " + r + "/5"; },
+    matchWin: "You won the match! 🏆",
+    matchLose: "Match over 😢",
+    matchWinText: "You survived all five rounds — Lukochuri champion!",
+    matchLoseText: "Caught this time. Hide in a better spot next match!",
+    endCoins: function(earned, total, best){ return "Coins this match: 🪙 +" + earned + " · Balance: 🪙 " + total + " · Best: " + best + " rounds"; },
+    endStats: function(w, m, rw){ return "Matches won: " + w + " · Matches played: " + m + " · Rounds won: " + rw; },
+    startBtn: "Start Playing ▶",
+    backBtn: "🏠 Khelaghor · Menu",
+    menuIntro: "Hide-and-seek in the village courtyard! You hide, the seeker searches. Stay quiet in a good spot to win — move in front of their eyes and you're caught!",
+    menuNote: "5-round match · 3 lives · Coins and best score save on this device",
+    statCoins: "Coins", statBest: "Best (Rounds)", statWins: "Matches Won", statRounds: "Rounds Won",
+    diffLabel: "Choose difficulty",
+    diffSubs: { easy: "Slow seeker", medium: "Normal", hard: "Fast + sharp" },
+    rules: [
+      "🙈 <b>Hide time</b> — run with the joystick/keyboard to the haystack, tree, house, cart, bush or pond edge and hide.",
+      "🔍 The seeker counts with eyes closed, then searches with a <b>vision cone</b>.",
+      "👁️ <b>Moving</b> in front of their eyes fills the spotted meter fast! <b>Staying still</b> in a good spot drains it.",
+      "🏃 When the seeker looks away, <b>sneak</b> to another spot — but get seen and you're in danger!",
+      "⏱️ Survive until the seek timer ends to win the round! 5 rounds per match, 3 lives.",
+      "✨ <b>Power-ups</b> float on the field — 👻 Ghost, ⚡ Speed, 🔇 Silent, 🪙 Coin! Touch one to use it."
+    ],
+    pauseTitle: "⏸ Paused", pauseText: "The game is paused.",
+    resume: "▶ Resume", restart: "↻ Restart Match", quit: "🏠 Main Menu",
+    nextRound: "Next Round ▶", rematch: "🔁 Rematch · Same Match",
+    roundsLabel: "Rounds Won", livesLabel: "Lives Left",
+    counting: "Seeker is counting…",
+    searching: "Seeker is searching…",
+    chasing: "🏃 The seeker is coming for you! Run!",
+    spotNames: { hay: "Haystack", tree: "Big Tree", house1: "Behind House", cart: "Bullock Cart", bush: "Bush", pond: "Pond Edge", house2: "Small Hut", banana: "Banana Tree", paddy: "Paddy Field" },
+    defaultName: "Player",
+    playerNameLabel: "Your name", charLabel: "Choose your character", achLabel: "Achievements",
+    charNames: { roni: "🏃 Roni", dour: "⚡ Speedy", chup: "🤫 Quiet" },
+    charSubs: { roni: "Balanced", dour: "12% faster", chup: "Spotted 20% slower" },
+    fxNames: { ghost: "👻 Ghost", speed: "⚡ Speed", silent: "🔇 Silent", coin: "🪙 Coin" },
+    puBanner: { ghost: "👻 Ghost! The seeker can't see you", speed: "⚡ Speed! Run fast for 6 seconds", silent: "🔇 Silent! Spotted meter rises slower", coin: "🪙 +10 coins!" },
+    matchWinName: function(n){ return n + " won the match! 🏆"; },
+    matchLoseName: function(n){ return n + ", match over 😢"; },
+    endAchText: function(list){ return "New achievements: " + list; }
+  }
+};
+
+/* ================= world: village courtyard ================= */
+var VW = 420, VH = 720;
+var SPOTS = [
+  { id: "hay",    x: 92,  y: 440, r: 46, risk: 0.50, kind: "circle" },
+  { id: "tree",   x: 332, y: 175, r: 44, risk: 0.55, kind: "circle" },
+  { id: "house1", x: 78,  y: 150, r: 48, risk: 0.80, kind: "circle" },
+  { id: "cart",   x: 322, y: 525, r: 44, risk: 0.85, kind: "circle" },
+  { id: "bush",   x: 210, y: 330, r: 38, risk: 1.00, kind: "circle" },
+  { id: "pond",   x: 88,  y: 605, r: 46, risk: 1.25, kind: "circle" },
+  { id: "house2", x: 338, y: 330, r: 42, risk: 0.90, kind: "circle" },
+  { id: "banana", x: 300, y: 110, r: 40, risk: 0.60, kind: "circle" },
+  { id: "paddy",  x: 160, y: 520, r: 42, risk: 0.75, kind: "circle" }
+];
+/* solid obstacles the player cannot walk through */
+var OBSTACLES_C = [
+  { x: 332, y: 175, r: 13 },  /* big tree trunk */
+  { x: 92,  y: 440, r: 30 },  /* haystack core */
+  { x: 322, y: 525, r: 26 },  /* cart body */
+  { x: 210, y: 330, r: 12 },  /* bush core */
+  { x: 300, y: 110, r: 13 }   /* banana tree trunk */
+];
+var OBSTACLES_R = [
+  { x: 30,  y: 96,  w: 96, h: 74 },   /* house 1 */
+  { x: 296, y: 288, w: 88, h: 68 }    /* house 2 */
+];
+var COUNT_SPOT = { x: 210, y: 92 };   /* where the seeker counts, facing the wall */
+var PATROL = [
+  { x: 70,  y: 250 }, { x: 210, y: 130 }, { x: 360, y: 250 },
+  { x: 360, y: 450 }, { x: 210, y: 620 }, { x: 70,  y: 470 }
+];
+var DIFFS = {
+  easy:   { seekSpd: 52, range: 150, fov: 1.22, hideTime: 12, seekTime: 45, checkEvery: 9.0, chaseSpd: 66 },
+  medium: { seekSpd: 74, range: 185, fov: 1.40, hideTime: 10, seekTime: 50, checkEvery: 6.5, chaseSpd: 94 },
+  hard:   { seekSpd: 96, range: 215, fov: 1.57, hideTime: 8,  seekTime: 55, checkEvery: 4.5, chaseSpd: 122 }
+};
+var COIN_ROUND = 15, COIN_PERFECT = 10, COIN_MATCH_WIN = 25, COIN_PERFECT_MATCH = 25, COIN_POWERUP = 10;
+var PLAYER_SPEED = 150;
+var TOTAL_ROUNDS = 5;
+var CHARS = {
+  roni: { color: "#1e8a49", emoji: "🏃", spd: 1,    stealth: 1 },
+  dour: { color: "#e67e22", emoji: "⚡", spd: 1.12, stealth: 1 },
+  chup: { color: "#1565c0", emoji: "🤫", spd: 1,    stealth: 0.8 }
+};
+var ACH = [
+  { id: "first_win",  icon: "🏆", bn: "প্রথম জয়",    en: "First Win" },
+  { id: "perfect3",   icon: "🌟", bn: "৩ পারফেক্ট",   en: "3 Perfect" },
+  { id: "rich100",    icon: "🪙", bn: "১০০ কয়েন",    en: "100 Coins" },
+  { id: "hard_win",   icon: "🔥", bn: "কঠিন জয়",     en: "Hard Win" },
+  { id: "survivor5",  icon: "👑", bn: "৫ রাউন্ড বাঁচা", en: "Survive 5" },
+  { id: "ghost",      icon: "👻", bn: "ভূতের মতো",    en: "Ghosted" }
+];
+var PWTYPES = ["ghost", "speed", "silent", "coin"];
+
+/* ================= state ================= */
+var S = {
+  lang: SAVE.lang === "en" ? "en" : "bn",
+  sound: SAVE.sound !== false,
+  diff: (SAVE.diff === "easy" || SAVE.diff === "hard") ? SAVE.diff : "medium",
+  char: (SAVE.char === "dour" || SAVE.char === "chup") ? SAVE.char : "roni",
+  state: "menu",           /* menu | hide | seek | roundEnd | end */
+  paused: false,
+  round: 1, lives: 3, roundsSurvived: 0,
+  matchCoins: 0, roundCoins: 0,
+  perfectCount: 0, roundResults: [], newAch: [],
+  powerups: [], fx: { ghost: 0, speed: 0, silent: 0 }, fxSpawned: false,
+  hideTime: 0, seekTime: 0,
+  spotted: 0, maxSpotted: 0, seen: false,
+  chase: false, chaseLost: 0,
+  player: { x: 210, y: 560, vx: 0, vy: 0, moving: false, face: -Math.PI / 2 },
+  seeker: { x: COUNT_SPOT.x, y: COUNT_SPOT.y, face: -Math.PI / 2, wp: 0, wait: 0, checking: null, checkT: 0, scanA: 0 },
+  checkTimer: 0, keys: {}, bob: 0,
+  _timerSec: -1
+};
+function diffCfg() { return DIFFS[S.diff]; }
+function spotAt(x, y) {
+  for (var i = 0; i < SPOTS.length; i++) {
+    var sp = SPOTS[i];
+    if (Math.hypot(x - sp.x, y - sp.y) <= sp.r) return sp;
+  }
+  return null;
+}
+
+/* ================= audio (WebAudio tones, no assets) ================= */
+var AC = null;
+function ensureAudio() {
+  if (!S.sound) return;
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+  } catch (e) {}
+}
+function tone(freq, dur, type, vol, when, slideTo) {
+  if (!S.sound || !AC) return;
+  try {
+    var t0 = AC.currentTime + (when || 0);
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || "sine"; o.frequency.setValueAtTime(freq, t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.12, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(t0); o.stop(t0 + dur + 0.05);
+  } catch (e) {}
+}
+function sndClick() { tone(700, 0.07, "triangle", 0.10); }
+function sndWhistle() { tone(2250, 0.10, "square", 0.05); tone(2250, 0.16, "square", 0.05, 0.13); }
+function sndCoin() { tone(1318, 0.09, "sine", 0.13); tone(1760, 0.16, "sine", 0.13, 0.07); }
+function sndFound() { tone(320, 0.25, "sawtooth", 0.12, 0, 140); tone(190, 0.35, "sawtooth", 0.12, 0.15, 90); }
+function sndWin() { [523, 659, 784, 1046].forEach(function(f, i){ tone(f, 0.18, "triangle", 0.13, i * 0.11); }); }
+function sndSpot() { tone(880, 0.08, "square", 0.06); }
+function sndTick() { tone(1200, 0.05, "square", 0.05); }
+function sndPower() { tone(880, 0.08, "sine", 0.12); tone(1174, 0.08, "sine", 0.12, 0.06); tone(1568, 0.14, "sine", 0.12, 0.12); }
+function sndAch() { [523, 659, 784, 1046].forEach(function(f, i){ tone(f, 0.12, "triangle", 0.12, i * 0.08); }); }
+
+/* ================= canvas + view ================= */
+var canvas = document.getElementById("game");
+var ctx = canvas.getContext("2d");
+var view = { s: 1, ox: 0, oy: 0, w: 0, h: 0, dpr: 1 };
+function resize() {
+  var wrap = document.getElementById("field-wrap");
+  var w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  view.dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(w * view.dpr);
+  canvas.height = Math.round(h * view.dpr);
+  view.s = Math.min(w / VW, h / VH);
+  view.ox = (w - VW * view.s) / 2;
+  view.oy = (h - VH * view.s) / 2;
+  view.w = w; view.h = h;
+}
+window.addEventListener("resize", resize);
+function toVirtual(cx, cy) {
+  var r = canvas.getBoundingClientRect();
+  return { x: (cx - r.left - view.ox) / view.s, y: (cy - r.top - view.oy) / view.s, px: cx - r.left, py: cy - r.top };
+}
+
+/* ================= rendering: village courtyard ================= */
+function drawField() {
+  /* grass */
+  ctx.fillStyle = "#57b34a";
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.fillStyle = "rgba(255,255,255,0.05)";
+  for (var i = 0; i < 40; i++) {
+    var gx = (i * 97) % VW, gy = (i * 61) % VH;
+    ctx.beginPath(); ctx.arc(gx, gy, 14 + (i % 3) * 6, 0, Math.PI * 2); ctx.fill();
+  }
+  /* dirt paths */
+  ctx.strokeStyle = "#c9a86a"; ctx.lineCap = "round";
+  ctx.lineWidth = 26; ctx.beginPath();
+  ctx.moveTo(210, 720); ctx.quadraticCurveTo(200, 520, 210, 330); ctx.quadraticCurveTo(215, 200, 210, 60); ctx.stroke();
+  ctx.lineWidth = 18; ctx.beginPath();
+  ctx.moveTo(40, 440); ctx.quadraticCurveTo(150, 420, 300, 440); ctx.quadraticCurveTo(370, 450, 400, 430); ctx.stroke();
+  /* pond (bottom-left) */
+  ctx.fillStyle = "#4db2e8";
+  ctx.beginPath(); ctx.ellipse(58, 648, 66, 42, -0.3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.beginPath(); ctx.ellipse(40, 636, 26, 10, -0.3, 0, Math.PI * 2); ctx.fill();
+  /* paddy patch (bottom-right corner) */
+  ctx.fillStyle = "#7fbf3f";
+  ctx.fillRect(330, 640, 90, 80);
+  ctx.strokeStyle = "#5da32e"; ctx.lineWidth = 2;
+  for (var py = 652; py < 716; py += 12) { ctx.beginPath(); ctx.moveTo(334, py); ctx.lineTo(416, py); ctx.stroke(); }
+  /* paddy field spot (new hiding spot) */
+  ctx.fillStyle = "#7fbf3f";
+  ctx.fillRect(118, 478, 84, 84);
+  ctx.strokeStyle = "#5da32e"; ctx.lineWidth = 2;
+  for (var py = 490; py < 556; py += 12) { ctx.beginPath(); ctx.moveTo(122, py); ctx.lineTo(198, py); ctx.stroke(); }
+  /* houses */
+  drawHouse(30, 96, 96, 74, "#f3e2c7", "#c0392b");
+  drawHouse(296, 288, 88, 68, "#ffe0b2", "#7d4a21");
+  /* trees */
+  drawTree(332, 175, 34);
+  drawTree(52, 300, 24);
+  drawTree(368, 90, 22);
+  drawTree(300, 110, 28); /* banana tree spot */
+  /* haystack */
+  ctx.fillStyle = "#e8c33c";
+  ctx.beginPath(); ctx.moveTo(92, 404); ctx.lineTo(122, 440); ctx.lineTo(122, 470); ctx.lineTo(62, 470); ctx.lineTo(62, 440); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#d9a91e";
+  ctx.beginPath(); ctx.moveTo(92, 404); ctx.lineTo(122, 440); ctx.lineTo(62, 440); ctx.closePath(); ctx.fill();
+  /* bullock cart */
+  ctx.fillStyle = "#8d6e63";
+  ctx.fillRect(296, 505, 52, 34);
+  ctx.fillStyle = "#6d4c41";
+  ctx.beginPath(); ctx.arc(302, 542, 10, 0, Math.PI * 2); ctx.arc(342, 542, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#5d4037"; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(348, 522); ctx.lineTo(372, 540); ctx.stroke();
+  /* bushes */
+  drawBush(210, 330, 30);
+  drawBush(150, 210, 20);
+  drawBush(380, 560, 22);
+  /* hiding-spot markers (dashed ring + risk dots) */
+  for (var i = 0; i < SPOTS.length; i++) {
+    var sp = SPOTS[i];
+    ctx.save();
+    ctx.setLineDash([6, 5]);
+    ctx.strokeStyle = "rgba(255,255,255,0.75)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.font = "bold 11px 'Hind Siliguri', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(T[S.lang].spotNames[sp.id], sp.x, sp.y - sp.r - 6);
+    ctx.restore();
+  }
+}
+function drawHouse(x, y, w, h, wall, roof) {
+  ctx.fillStyle = wall;
+  ctx.fillRect(x, y + 18, w, h - 18);
+  ctx.fillStyle = roof;
+  ctx.beginPath(); ctx.moveTo(x - 6, y + 20); ctx.lineTo(x + w / 2, y - 6); ctx.lineTo(x + w + 6, y + 20); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#5d4037";
+  ctx.fillRect(x + w / 2 - 9, y + h - 26, 18, 26);
+  ctx.fillStyle = "#fff8d6";
+  ctx.fillRect(x + 10, y + 30, 16, 14);
+  ctx.fillRect(x + w - 26, y + 30, 16, 14);
+}
+function drawTree(x, y, r) {
+  ctx.fillStyle = "#6d4c41";
+  ctx.fillRect(x - 5, y - 6, 10, r + 8);
+  ctx.fillStyle = "#2e7d32";
+  ctx.beginPath(); ctx.arc(x, y - 14, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#388e3c";
+  ctx.beginPath(); ctx.arc(x - r * 0.45, y - 6, r * 0.6, 0, Math.PI * 2); ctx.arc(x + r * 0.45, y - 6, r * 0.6, 0, Math.PI * 2); ctx.fill();
+}
+function drawBush(x, y, r) {
+  ctx.fillStyle = "#33691e";
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#558b2f";
+  ctx.beginPath(); ctx.arc(x - r * 0.4, y - r * 0.25, r * 0.55, 0, Math.PI * 2); ctx.arc(x + r * 0.4, y - r * 0.2, r * 0.55, 0, Math.PI * 2); ctx.fill();
+}
+function drawPowerups() {
+  for (var i = 0; i < S.powerups.length; i++) {
+    var pu = S.powerups[i];
+    var r = 16 + Math.sin(S.bob * 3 + i * 1.7) * 2;
+    ctx.save();
+    ctx.fillStyle = "rgba(242,176,30,0.35)";
+    ctx.beginPath(); ctx.arc(pu.x, pu.y, r + 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#f2b01e"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(pu.x, pu.y, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(T[S.lang].fxNames[pu.type].split(" ")[0], pu.x, pu.y + 1);
+    ctx.restore();
+  }
+}
+function drawPlayer() {
+  var p = S.player;
+  var bobY = p.moving ? Math.sin(S.bob * 10) * 2 : Math.sin(S.bob * 2) * 1;
+  ctx.save();
+  ctx.translate(p.x, p.y + bobY);
+  /* shadow */
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.beginPath(); ctx.ellipse(0, 12 - bobY, 13, 5, 0, 0, Math.PI * 2); ctx.fill();
+  /* body (character colour) */
+  ctx.fillStyle = (CHARS[S.char] || CHARS.roni).color;
+  ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
+  /* head */
+  ctx.fillStyle = "#f1c27d";
+  ctx.beginPath(); ctx.arc(0, -11, 8, 0, Math.PI * 2); ctx.fill();
+  /* face direction tick */
+  ctx.strokeStyle = "#17301c"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(Math.cos(p.face) * 10, -11 + Math.sin(p.face) * 10); ctx.stroke();
+  /* character emoji above the head while hiding */
+  if (S.state === "hide") {
+    ctx.font = "16px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText((CHARS[S.char] || CHARS.roni).emoji, 0, -26);
+  }
+  ctx.restore();
+  /* hidden / spotted indicators */
+  var sp = spotAt(p.x, p.y);
+  if (S.state === "seek" && sp && !p.moving) {
+    ctx.font = "18px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("🤫", p.x, p.y - 26);
+  }
+  if (S.spotted > 0 && S.state === "seek") {
+    ctx.save();
+    ctx.strokeStyle = S.spotted > 60 ? "#d63c2f" : "#f2b01e";
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 20, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * S.spotted / 100)); ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawSeeker() {
+  var k = S.seeker;
+  /* vision cone (seek phase only) */
+  if (S.state === "seek") {
+    var cfg = diffCfg();
+    ctx.save();
+    ctx.translate(k.x, k.y);
+    ctx.rotate(k.face);
+    var grad = ctx.createRadialGradient(0, 0, 10, 0, 0, cfg.range);
+    grad.addColorStop(0, "rgba(242,176,30,0.34)");
+    grad.addColorStop(1, "rgba(242,176,30,0.05)");
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.arc(0, 0, cfg.range, -cfg.fov / 2, cfg.fov / 2);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.translate(k.x, k.y);
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.beginPath(); ctx.ellipse(0, 12, 13, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#d63c2f";
+  ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#f1c27d";
+  ctx.beginPath(); ctx.arc(0, -11, 8, 0, Math.PI * 2); ctx.fill();
+  if (S.state === "hide") {
+    /* counting: blindfold + counting hand */
+    ctx.fillStyle = "#17301c";
+    ctx.fillRect(-9, -14, 18, 5);
+    ctx.font = "16px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("🙈", 0, -24);
+  } else {
+    ctx.fillStyle = "#17301c";
+    ctx.beginPath(); ctx.arc(-3, -12, 1.6, 0, Math.PI * 2); ctx.arc(3, -12, 1.6, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+  if (S.chase) {
+    ctx.font = "20px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("❗", k.x, k.y - 26);
+  }
+}
+function render() {
+  ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+  ctx.clearRect(0, 0, view.w, view.h);
+  ctx.save();
+  ctx.translate(view.ox * view.dpr / view.dpr, view.oy * view.dpr / view.dpr);
+  ctx.scale(view.s, view.s);
+  /* letterbox background */
+  ctx.fillStyle = "#2c5e2e";
+  ctx.fillRect(-view.ox / view.s - 10, -view.oy / view.s - 10, VW + view.ox / view.s * 2 + 20, VH + view.oy / view.s * 2 + 20);
+  drawField();
+  drawPowerups();
+  drawSeeker();
+  drawPlayer();
+  ctx.restore();
+}
+
+/* ================= joystick + pointer ================= */
+var joyEl = document.getElementById("joy"), joyNub = document.getElementById("joyNub");
+var joy = { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0, mag: 0 };
+var JOY_R = 52;
+function joyShow(px, py) { joyEl.style.left = px + "px"; joyEl.style.top = py + "px"; joyEl.style.display = "block"; joyNub.style.transform = "translate(-50%,-50%)"; }
+function joyMove(px, py) {
+  var dx = px - joy.ox, dy = py - joy.oy;
+  var d = Math.hypot(dx, dy);
+  var cl = Math.min(d, JOY_R);
+  var nx = d > 0 ? dx / d : 0, ny = d > 0 ? dy / d : 0;
+  joy.dx = nx; joy.dy = ny;
+  var rm = d < 9 ? 0 : cl / JOY_R;
+  joy.mag = rm * rm * (3 - 2 * rm);
+  joyNub.style.transform = "translate(calc(-50% + " + (nx * cl * 0.72) + "px), calc(-50% + " + (ny * cl * 0.72) + "px))";
+}
+function joyHide() { joy.active = false; joy.id = null; joy.mag = 0; joy.dx = 0; joy.dy = 0; joyEl.style.display = "none"; }
+canvas.addEventListener("pointerdown", function(e) {
+  ensureAudio();
+  if (S.paused) return;
+  if (S.state !== "hide" && S.state !== "seek") return;
+  var p = toVirtual(e.clientX, e.clientY);
+  if (joy.active) return;
+  joy.active = true; joy.id = e.pointerId; joy.ox = p.px; joy.oy = p.py;
+  joy.dx = 0; joy.dy = 0; joy.mag = 0;
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  joyShow(p.px, p.py);
+  e.preventDefault();
+});
+canvas.addEventListener("pointermove", function(e) {
+  if (!joy.active || e.pointerId !== joy.id) return;
+  var p = toVirtual(e.clientX, e.clientY);
+  joyMove(p.px, p.py);
+});
+function joyEnd(e) { if (joy.active && e.pointerId === joy.id) joyHide(); }
+canvas.addEventListener("pointerup", joyEnd);
+canvas.addEventListener("pointercancel", joyEnd);
+
+/* ================= keyboard ================= */
+window.addEventListener("keydown", function(e) {
+  S.keys[e.key.toLowerCase()] = true;
+  if (e.key === "Escape") {
+    if (S.state === "hide" || S.state === "seek") { togglePause(!S.paused); return; }
+    if (S.paused) { togglePause(false); return; }
+  }
+  if ((e.key === " " || e.key === "Enter") && S.state === "hide" && !el("readyBtn").hidden) { e.preventDefault(); startSeek(); }
+});
+window.addEventListener("keyup", function(e) { S.keys[e.key.toLowerCase()] = false; });
+window.addEventListener("blur", function() { S.keys = {}; });
+document.addEventListener("visibilitychange", function() {
+  if (document.hidden) { S.keys = {}; if (!S.paused && (S.state === "hide" || S.state === "seek")) togglePause(true); }
+});
+
+/* ================= dom refs + helpers ================= */
+var el = function(id){ return document.getElementById(id); };
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function angDiff(a, b) { var d = a - b; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; }
+function fmtTime(sec) {
+  var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+  var ss = (s < 10 ? "0" : "") + s;
+  return num(m) + ":" + num(ss);
+}
+
+/* ================= movement + collision ================= */
+function collide(x, y, r) {
+  for (var i = 0; i < OBSTACLES_C.length; i++) {
+    var o = OBSTACLES_C[i];
+    var dx = x - o.x, dy = y - o.y, d = Math.hypot(dx, dy);
+    var min = o.r + r;
+    if (d < min && d > 0.001) { x = o.x + dx / d * min; y = o.y + dy / d * min; }
+  }
+  for (var j = 0; j < OBSTACLES_R.length; j++) {
+    var rc = OBSTACLES_R[j];
+    var cx = clamp(x, rc.x, rc.x + rc.w), cy = clamp(y, rc.y, rc.y + rc.h);
+    var ddx = x - cx, ddy = y - cy, dd = Math.hypot(ddx, ddy);
+    if (dd < r) {
+      if (dd > 0.001) { x = cx + ddx / dd * r; y = cy + ddy / dd * r; }
+      else { /* inside rect: push out along smallest axis */
+        var l = x - rc.x, rr = rc.x + rc.w - x, t = y - rc.y, bb = rc.y + rc.h - y;
+        var m = Math.min(l, rr, t, bb);
+        if (m === l) x = rc.x - r; else if (m === rr) x = rc.x + rc.w + r;
+        else if (m === t) y = rc.y - r; else y = rc.y + rc.h + r;
+      }
+    }
+  }
+  x = clamp(x, 16, VW - 16); y = clamp(y, 16, VH - 16);
+  return { x: x, y: y };
+}
+function updatePlayer(dt) {
+  var p = S.player;
+  var kx = 0, ky = 0;
+  var k = S.keys;
+  if (k["arrowright"] || k["d"]) kx += 1;
+  if (k["arrowleft"] || k["a"]) kx -= 1;
+  if (k["arrowdown"] || k["s"]) ky += 1;
+  if (k["arrowup"] || k["w"]) ky -= 1;
+  var mx = 0, my = 0, mag = 0;
+  if (joy.active && joy.mag > 0) { mx = joy.dx * joy.mag; my = joy.dy * joy.mag; mag = joy.mag; }
+  else if (kx || ky) { var kl = Math.hypot(kx, ky); mx = kx / kl; my = ky / kl; mag = 1; }
+  p.moving = mag > 0.05;
+  if (p.moving) {
+    var spd = PLAYER_SPEED * (CHARS[S.char] || CHARS.roni).spd * (S.fx.speed > 0 ? 1.5 : 1);
+    var nx = p.x + mx * spd * mag * dt;
+    var ny = p.y + my * spd * mag * dt;
+    var c = collide(nx, ny, 13);
+    p.x = c.x; p.y = c.y;
+    p.face = Math.atan2(my, mx);
+    S.bob += dt;
+  }
+  collectPowerups();
+}
+
+/* ================= seeker AI ================= */
+function seekerSeesPlayer() {
+  if (S.state !== "seek") return false;
+  if (S.fx.ghost > 0) return false; /* ghost power-up: invisible */
+  var cfg = diffCfg(), k = S.seeker, p = S.player;
+  var dx = p.x - k.x, dy = p.y - k.y;
+  var d = Math.hypot(dx, dy);
+  if (d > cfg.range) return false;
+  var ang = Math.atan2(dy, dx);
+  return Math.abs(angDiff(ang, k.face)) <= cfg.fov / 2;
+}
+function updateSeeker(dt) {
+  var cfg = diffCfg(), k = S.seeker, p = S.player;
+  var speed = cfg.seekSpd;
+  var target = null, arrive = 10;
+  if (S.chase) {
+    target = { x: p.x, y: p.y };
+    speed = cfg.chaseSpd;
+    arrive = 24;
+  } else if (k.checking) {
+    target = k.checking;
+    arrive = 10;
+  } else {
+    target = PATROL[k.wp];
+    arrive = 10;
+  }
+  var dx = target.x - k.x, dy = target.y - k.y;
+  var d = Math.hypot(dx, dy);
+  if (d > arrive) {
+    var step = Math.min(d, speed * dt);
+    k.x += dx / d * step;
+    k.y += dy / d * step;
+    var want = Math.atan2(dy, dx);
+    k.face += angDiff(want, k.face) * Math.min(1, dt * 8);
+    k.wait = 0;
+  } else {
+    if (S.chase) {
+      /* caught */
+      if (d < 26) { foundRound(); return; }
+    } else if (k.checking) {
+      k.checkT += dt;
+      var sp = null;
+      for (var i = 0; i < SPOTS.length; i++) if (SPOTS[i].id === k.checking.spotId) sp = SPOTS[i];
+      if (sp) {
+        var want2 = Math.atan2(sp.y - k.y, sp.x - k.x);
+        k.face += angDiff(want2, k.face) * Math.min(1, dt * 6);
+      }
+      if (k.checkT >= 1.6) { k.checking = null; k.checkT = 0; }
+    } else {
+      k.wait += dt;
+      k.face += dt * 1.1; /* scanning around */
+      if (k.wait >= 1.2) { k.wait = 0; k.wp = (k.wp + 1) % PATROL.length; }
+    }
+  }
+  /* bump catch: seeker walks into the player while patrolling */
+  if (!S.chase && S.state === "seek") {
+    if (Math.hypot(p.x - k.x, p.y - k.y) < 24) { foundRound(); return; }
+  }
+  /* schedule the next spot check */
+  if (!S.chase && !k.checking) {
+    S.checkTimer -= dt;
+    if (S.checkTimer <= 0) {
+      S.checkTimer = cfg.checkEvery;
+      var sp2 = SPOTS[Math.floor(Math.random() * SPOTS.length)];
+      var cx = 210 - sp2.x, cy = 360 - sp2.y, cl = Math.hypot(cx, cy) || 1;
+      k.checking = { x: sp2.x + cx / cl * 58, y: sp2.y + cy / cl * 58, spotId: sp2.id };
+      k.checkT = 0;
+    }
+  }
+}
+
+/* ================= spotted meter ================= */
+function updateSpotted(dt) {
+  var cfg = diffCfg(), k = S.seeker, p = S.player;
+  var visible = seekerSeesPlayer();
+  if (visible) {
+    var dx = p.x - k.x, dy = p.y - k.y;
+    var d = Math.hypot(dx, dy);
+    var sp = spotAt(p.x, p.y);
+    var risk = sp ? sp.risk : 1.6;
+    var distF = d < 80 ? 1.5 : (d < cfg.range * 0.6 ? 1.0 : 0.6);
+    var rate = 26 * risk * (p.moving ? 1.6 : 1.0) * distF;
+    rate *= (CHARS[S.char] || CHARS.roni).stealth;
+    if (S.fx.silent > 0) rate *= 0.5;
+    if (sp && !p.moving) rate *= 0.4;
+    if (k.checking && sp && k.checking.spotId === sp.id) rate *= 2.5;
+    S.spotted += rate * dt;
+    if (S.spotted >= 70 && !S.chase) { S.chase = true; S.chaseLost = 0; sndSpot(); }
+  } else {
+    S.spotted = Math.max(0, S.spotted - 14 * dt);
+    if (S.chase) {
+      S.chaseLost += dt;
+      if (S.chaseLost > 2 || S.spotted < 30) { S.chase = false; S.chaseLost = 0; }
+    }
+  }
+  S.spotted = clamp(S.spotted, 0, 100);
+  if (S.spotted > S.maxSpotted) S.maxSpotted = S.spotted;
+  if (S.spotted >= 100) { foundRound(); }
+}
+
+/* ================= power-ups ================= */
+function randPowerupPos() {
+  for (var tries = 0; tries < 20; tries++) {
+    var x = 30 + Math.random() * 360, y = 100 + Math.random() * 590;
+    if (Math.hypot(x - S.player.x, y - S.player.y) < 120) continue;
+    var ok = true;
+    for (var i = 0; i < SPOTS.length; i++) if (Math.hypot(x - SPOTS[i].x, y - SPOTS[i].y) < 60) { ok = false; break; }
+    if (!ok) continue;
+    for (var j = 0; j < OBSTACLES_C.length; j++) if (Math.hypot(x - OBSTACLES_C[j].x, y - OBSTACLES_C[j].y) < OBSTACLES_C[j].r + 24) { ok = false; break; }
+    if (!ok) continue;
+    var inRect = false;
+    for (var k = 0; k < OBSTACLES_R.length; k++) { var r = OBSTACLES_R[k]; if (x > r.x - 20 && x < r.x + r.w + 20 && y > r.y - 20 && y < r.y + r.h + 20) inRect = true; }
+    if (inRect) continue;
+    return { x: x, y: y };
+  }
+  return { x: 210, y: 650 };
+}
+function spawnPowerups() {
+  var types = PWTYPES.slice();
+  for (var n = 0; n < 2; n++) {
+    var type = types.splice(Math.floor(Math.random() * types.length), 1)[0];
+    var pos = randPowerupPos();
+    S.powerups.push({ x: pos.x, y: pos.y, type: type });
+  }
+}
+function collectPowerups() {
+  var p = S.player;
+  for (var i = S.powerups.length - 1; i >= 0; i--) {
+    var pu = S.powerups[i];
+    if (Math.hypot(p.x - pu.x, p.y - pu.y) < 24) {
+      S.powerups.splice(i, 1);
+      if (pu.type === "coin") {
+        SAVE.coins += COIN_POWERUP; persist(); sndCoin();
+      } else {
+        S.fx[pu.type] = pu.type === "ghost" ? 4 : 6; sndPower();
+        if (pu.type === "ghost") unlockAch("ghost");
+      }
+      showBanner(T[S.lang].puBanner[pu.type]);
+    }
+  }
+}
+
+/* ================= main update ================= */
+var _lastTickSec = -1;
+function update(dt) {
+  S.bob += dt * 0.4;
+  if (S.state === "hide") {
+    updatePlayer(dt);
+    var prev = Math.ceil(S.hideTime);
+    S.hideTime -= dt;
+    var now = Math.ceil(S.hideTime);
+    if (now !== prev && now <= 3 && now > 0) sndTick();
+    if (S.hideTime <= 0) { startSeek(); }
+  } else if (S.state === "seek") {
+    updatePlayer(dt);
+    updateSeeker(dt);
+    if (S.state !== "seek") return; /* foundRound may have ended the round */
+    updateSpotted(dt);
+    if (S.state !== "seek") return;
+    S.seekTime -= dt;
+    if (S.seekTime <= 0) { winRound(); }
+  }
+  /* power-up timers + spawn 5s into the seek phase (never during the hide) */
+  if (S.state === "hide" || S.state === "seek") {
+    if (S.fx.ghost > 0) S.fx.ghost = Math.max(0, S.fx.ghost - dt);
+    if (S.fx.speed > 0) S.fx.speed = Math.max(0, S.fx.speed - dt);
+    if (S.fx.silent > 0) S.fx.silent = Math.max(0, S.fx.silent - dt);
+  }
+  if (S.state === "seek" && !S.fxSpawned && S.seekTime <= diffCfg().seekTime - 5) {
+    S.fxSpawned = true;
+    spawnPowerups();
+  }
+  updateHUD();
+}
+
+/* ================= HUD ================= */
+var _hud = { tag: "", lives: -1, rounds: -1, coins: -1, status: "", spot: "", timer: "", dots: "", fx: "" };
+function updateHUD() {
+  var t = T[S.lang];
+  var tag = t.round(S.round);
+  if (_hud.tag !== tag) { _hud.tag = tag; el("matchTag").textContent = tag; el("diffTag").textContent = t.diffNames[S.diff]; }
+  if (_hud.lives !== S.lives) { _hud.lives = S.lives; el("livesCount").textContent = num(S.lives); }
+  if (_hud.rounds !== S.roundsSurvived) { _hud.rounds = S.roundsSurvived; el("roundsWon").textContent = num(S.roundsSurvived); }
+  if (_hud.coins !== SAVE.coins) { _hud.coins = SAVE.coins; el("coinCount").textContent = num(SAVE.coins); el("menuCoins").textContent = num(SAVE.coins); }
+  var dots = "";
+  for (var i = 0; i < TOTAL_ROUNDS; i++) {
+    var rr = S.roundResults[i];
+    dots += rr === "W" ? '<span style="color:#1e8a49">●</span>' : rr === "L" ? '<span style="color:#d63c2f">✕</span>' : '<span style="color:rgba(0,0,0,.35)">○</span>';
+  }
+  if (_hud.dots !== dots) { _hud.dots = dots; el("roundDots").innerHTML = dots; }
+  var fxParts = [];
+  if (S.fx.ghost > 0) fxParts.push("👻 " + num(Math.ceil(S.fx.ghost)) + "s");
+  if (S.fx.speed > 0) fxParts.push("⚡ " + num(Math.ceil(S.fx.speed)) + "s");
+  if (S.fx.silent > 0) fxParts.push("🔇 " + num(Math.ceil(S.fx.silent)) + "s");
+  var fxText = fxParts.join(" ");
+  if (_hud.fx !== fxText) {
+    _hud.fx = fxText;
+    var ft = el("fxTag");
+    ft.hidden = !fxText;
+    ft.textContent = fxText;
+  }
+  var status = "", cls = "";
+  if (S.state === "menu") status = t.ready;
+  else if (S.state === "hide") { status = t.hidePhase + " · " + t.hideHint; cls = "hide-phase"; }
+  else if (S.state === "seek") { status = S.chase ? t.chasing : t.seekPhase; if (S.spotted >= 60) cls = "danger"; }
+  else if (S.state === "roundEnd") status = "";
+  else if (S.state === "end") status = "";
+  if (_hud.status !== status) { _hud.status = status; el("statusText").textContent = status; }
+  el("statusbar").className = cls;
+  var spot = "";
+  if (S.state === "seek") {
+    if (S.spotted > 0) spot = t.spottedTag(Math.round(S.spotted));
+    else if (spotAt(S.player.x, S.player.y) && !S.player.moving) spot = t.hiddenTag;
+  }
+  if (_hud.spot !== spot) {
+    _hud.spot = spot;
+    var st = el("spotTag");
+    st.hidden = !spot;
+    st.textContent = spot;
+    st.classList.toggle("hot", S.spotted >= 60);
+  }
+  var timer = "";
+  if (S.state === "hide") timer = "⏱ " + fmtTime(Math.max(0, S.hideTime));
+  else if (S.state === "seek") timer = "⏱ " + fmtTime(Math.max(0, S.seekTime));
+  if (_hud.timer !== timer) {
+    _hud.timer = timer;
+    var tt = el("timerTag");
+    tt.hidden = !timer;
+    tt.textContent = timer;
+    tt.classList.toggle("low", (S.state === "hide" && S.hideTime <= 3.5) || (S.state === "seek" && S.seekTime <= 10.5));
+  }
+}
+function showBanner(main, sub) {
+  var b = el("banner");
+  b.innerHTML = main + (sub ? "<small>" + sub + "</small>" : "");
+  b.classList.add("show");
+  setTimeout(function() { b.classList.remove("show"); }, 1600);
+}
+
+/* ================= round / match flow ================= */
+function hideAllOverlays() {
+  ["menuOverlay", "pauseOverlay", "roundOverlay", "endOverlay"].forEach(function(id) { el(id).hidden = true; });
+}
+function startMatch() {
+  S.round = 1; S.lives = 3; S.roundsSurvived = 0; S.matchCoins = 0;
+  S.perfectCount = 0; S.roundResults = []; S.newAch = [];
+  hideAllOverlays();
+  setupRound();
+}
+function setupRound() {
+  S.player.x = 210; S.player.y = 560; S.player.face = -Math.PI / 2; S.player.moving = false;
+  S.seeker = { x: COUNT_SPOT.x, y: COUNT_SPOT.y, face: -Math.PI / 2, wp: 0, wait: 0, checking: null, checkT: 0, scanA: 0 };
+  S.spotted = 0; S.maxSpotted = 0; S.chase = false; S.chaseLost = 0;
+  S.checkTimer = diffCfg().checkEvery;
+  S.hideTime = diffCfg().hideTime;
+  S.powerups = []; S.fx = { ghost: 0, speed: 0, silent: 0 }; S.fxSpawned = false;
+  S.state = "hide"; S.paused = false;
+  joyHide();
+  el("readyBtn").hidden = false;
+  el("readyBtn").textContent = T[S.lang].readyBtn;
+  hideAllOverlays();
+  _hud.status = ""; _hud.timer = ""; _hud.spot = "";
+  updateHUD();
+  sndWhistle();
+}
+function startSeek() {
+  if (S.state !== "hide" || S.paused) return;
+  S.state = "seek";
+  S.seekTime = diffCfg().seekTime;
+  el("readyBtn").hidden = true;
+  _hud.status = ""; _hud.timer = "";
+  updateHUD();
+  sndWhistle();
+}
+function winRound() {
+  if (S.state !== "seek") return;
+  var perfect = S.maxSpotted < 30;
+  var coins = COIN_ROUND + (perfect ? COIN_PERFECT : 0);
+  S.roundCoins = coins; S.matchCoins += coins;
+  SAVE.coins += coins; SAVE.roundsWon++; S.roundsSurvived++;
+  if (perfect) S.perfectCount++;
+  S.roundResults.push("W");
+  unlockAch("first_win");
+  if (S.perfectCount >= 3) unlockAch("perfect3");
+  persist();
+  sndWin(); sndCoin();
+  S.state = "roundEnd";
+  joyHide(); el("readyBtn").hidden = true;
+  var t = T[S.lang];
+  el("roundTitle").textContent = t.roundWin;
+  el("roundText").textContent = t.roundWinText + (perfect ? t.perfectTag : "");
+  el("roundCoins").textContent = t.roundCoins(coins, SAVE.coins);
+  el("roundStats").textContent = t.roundStats(S.lives, S.roundsSurvived);
+  el("roundNextBtn").textContent = (S.lives <= 0 || S.round >= TOTAL_ROUNDS) ? t.matchWin : t.nextRound;
+  hideAllOverlays();
+  el("roundOverlay").hidden = false;
+  updateHUD();
+}
+function foundRound() {
+  if (S.state !== "seek") return;
+  S.lives--;
+  S.roundCoins = 0;
+  S.roundResults.push("L");
+  sndFound();
+  S.state = "roundEnd";
+  joyHide(); el("readyBtn").hidden = true;
+  var t = T[S.lang];
+  el("roundTitle").textContent = t.roundFound;
+  el("roundText").textContent = t.roundFoundText;
+  el("roundCoins").textContent = t.roundCoins(0, SAVE.coins);
+  el("roundStats").textContent = t.roundStats(S.lives, S.roundsSurvived);
+  el("roundNextBtn").textContent = (S.lives <= 0 || S.round >= TOTAL_ROUNDS) ? t.matchWin : t.nextRound;
+  hideAllOverlays();
+  el("roundOverlay").hidden = false;
+  updateHUD();
+}
+function nextRound() {
+  if (S.lives <= 0 || S.round >= TOTAL_ROUNDS) { endMatch(); return; }
+  S.round++;
+  setupRound();
+}
+function endMatch() {
+  var won = S.roundsSurvived >= 3;
+  var perfectMatch = S.roundsSurvived === TOTAL_ROUNDS && S.perfectCount === TOTAL_ROUNDS;
+  if (won) { SAVE.coins += COIN_MATCH_WIN; S.matchCoins += COIN_MATCH_WIN; SAVE.wins++; }
+  if (perfectMatch) { SAVE.coins += COIN_PERFECT_MATCH; S.matchCoins += COIN_PERFECT_MATCH; }
+  SAVE.matches++;
+  SAVE.best = Math.max(SAVE.best, S.roundsSurvived);
+  if (won && S.diff === "hard") unlockAch("hard_win");
+  if (S.roundsSurvived === TOTAL_ROUNDS) unlockAch("survivor5");
+  if (SAVE.coins >= 100) unlockAch("rich100");
+  persist();
+  if (won) sndWin();
+  S.state = "end";
+  var t = T[S.lang];
+  var pname = (SAVE.name || "").trim() || t.defaultName;
+  el("endTitle").textContent = won ? t.matchWinName(pname) : t.matchLoseName(pname);
+  el("endText").textContent = won ? t.matchWinText : t.matchLoseText;
+  el("fsRounds").textContent = num(S.roundsSurvived);
+  el("fsLives").textContent = num(Math.max(0, S.lives));
+  el("endCoins").textContent = t.endCoins(S.matchCoins, SAVE.coins, SAVE.best);
+  el("endStats").textContent = t.endStats(SAVE.wins, SAVE.matches, SAVE.roundsWon);
+  var ea = el("endAch");
+  if (S.newAch.length) {
+    var names = S.newAch.map(function(id) { for (var i = 0; i < ACH.length; i++) if (ACH[i].id === id) return achName(ACH[i]); return id; });
+    ea.textContent = t.endAchText(names.join(", "));
+    ea.hidden = false;
+  } else { ea.hidden = true; }
+  hideAllOverlays();
+  el("endOverlay").hidden = false;
+  updateHUD();
+}
+function togglePause(on) {
+  if (S.state !== "hide" && S.state !== "seek" && !S.paused) return;
+  S.paused = on;
+  el("pauseOverlay").hidden = !on;
+  if (on) { S.keys = {}; joyHide(); }
+}
+function quitToMenu() {
+  S.state = "menu"; S.paused = false;
+  joyHide(); el("readyBtn").hidden = true;
+  hideAllOverlays();
+  el("menuOverlay").hidden = false;
+  refreshMenuStats();
+  _hud.status = ""; _hud.timer = ""; _hud.spot = ""; _hud.lives = -1; _hud.rounds = -1;
+  updateHUD();
+}
+/* ================= achievements ================= */
+function achName(a) { return a.icon + " " + (S.lang === "bn" ? a.bn : a.en); }
+function unlockAch(id) {
+  if (!Array.isArray(SAVE.ach)) SAVE.ach = [];
+  if (SAVE.ach.indexOf(id) !== -1) return;
+  SAVE.ach.push(id); persist();
+  S.newAch.push(id);
+  var a = null;
+  for (var i = 0; i < ACH.length; i++) if (ACH[i].id === id) a = ACH[i];
+  if (a) { showBanner("🏆 " + achName(a)); sndAch(); }
+}
+function renderAchievements() {
+  var row = el("achRow");
+  row.innerHTML = "";
+  ACH.forEach(function(a) {
+    var got = Array.isArray(SAVE.ach) && SAVE.ach.indexOf(a.id) !== -1;
+    var chip = document.createElement("span");
+    chip.className = "ach-chip" + (got ? " got" : "");
+    chip.textContent = got ? achName(a) : "🔒 ?";
+    row.appendChild(chip);
+  });
+}
+/* menu stats count up like the site's 0 -> 41 (Bangla digits via num()) */
+function countUp(el, target) {
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = num(target); return; }
+  var t0 = null;
+  function step(ts) {
+    if (t0 === null) t0 = ts;
+    var p = Math.min(1, (ts - t0) / 900);
+    el.textContent = num(Math.round(target * (1 - Math.pow(1 - p, 3))));
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function refreshMenuStats() {
+  var show = !el("menuOverlay").hidden;
+  var pairs = [["menuCoins", SAVE.coins], ["menuBest", SAVE.best], ["menuWins", SAVE.wins], ["menuRounds", SAVE.roundsWon]];
+  pairs.forEach(function(pr) { if (show) countUp(el(pr[0]), pr[1]); else el(pr[0]).textContent = num(pr[1]); });
+  renderAchievements();
+}
+
+/* ================= i18n apply ================= */
+function applyLang() {
+  var t = T[S.lang];
+  document.documentElement.lang = S.lang;
+  el("menuIntro").textContent = t.menuIntro;
+  el("menuNote").textContent = t.menuNote;
+  el("statCoinsLabel").textContent = t.statCoins;
+  el("statBestLabel").textContent = t.statBest;
+  el("statWinsLabel").textContent = t.statWins;
+  el("statRoundsLabel").textContent = t.statRounds;
+  el("diffLabel").textContent = t.diffLabel;
+  el("playerNameLabel").textContent = t.playerNameLabel;
+  el("charLabel").textContent = t.charLabel;
+  el("achLabel").textContent = t.achLabel;
+  var nameInput = el("playerName");
+  if (document.activeElement !== nameInput) nameInput.value = (SAVE.name || "").trim() || t.defaultName;
+  document.querySelectorAll("#charSeg button").forEach(function(b) {
+    var c = b.getAttribute("data-char");
+    b.querySelector(".dname").textContent = t.charNames[c];
+    b.querySelector(".dsub").textContent = t.charSubs[c];
+    b.classList.toggle("on", c === S.char);
+  });
+  renderAchievements();
+  el("startBtn").textContent = t.startBtn;
+  el("backBtn").textContent = t.backBtn;
+  el("pauseTitle").textContent = t.pauseTitle;
+  el("pauseText").textContent = t.pauseText;
+  el("resumeBtn").textContent = t.resume;
+  el("restartBtn").textContent = t.restart;
+  el("quitBtn").textContent = t.quit;
+  el("roundNextBtn").textContent = t.nextRound;
+  el("roundMenuBtn").textContent = t.quit;
+  el("rematchBtn").textContent = t.rematch;
+  el("endMenuBtn").textContent = t.quit;
+  el("livesLabel").textContent = t.lives;
+  el("roundsLabel").textContent = t.roundsWon;
+  el("fsRoundsLabel").textContent = t.roundsWon;
+  el("fsLivesLabel").textContent = t.livesLabel;
+  el("readyBtn").textContent = t.readyBtn;
+  el("langBtn").textContent = S.lang === "bn" ? "EN" : "বাং";
+  var rules = el("rulesList");
+  rules.innerHTML = "";
+  t.rules.forEach(function(r) { var li = document.createElement("li"); li.innerHTML = r; rules.appendChild(li); });
+  document.querySelectorAll("#diffSeg button").forEach(function(b) {
+    var d = b.getAttribute("data-diff");
+    b.querySelector(".dname").textContent = t.diffNames[d];
+    b.querySelector(".dsub").textContent = t.diffSubs[d];
+    b.classList.toggle("on", d === S.diff);
+  });
+  _hud.tag = ""; _hud.status = ""; _hud.timer = ""; _hud.spot = "";
+  refreshMenuStats();
+  updateHUD();
+}
+
+/* ================= wiring ================= */
+function pressBtn(btn, fn) {
+  btn.addEventListener("pointerdown", function(e) { e.preventDefault(); e.stopPropagation(); ensureAudio(); fn(); });
+}
+el("startBtn").addEventListener("click", function() { ensureAudio(); sndClick(); startMatch(); });
+el("backBtn").addEventListener("click", function() { sndClick(); window.location.href = "index.html"; });
+el("readyBtn").addEventListener("click", function() { ensureAudio(); sndClick(); startSeek(); });
+el("roundNextBtn").addEventListener("click", function() { sndClick(); nextRound(); });
+el("roundMenuBtn").addEventListener("click", function() { sndClick(); quitToMenu(); });
+el("rematchBtn").addEventListener("click", function() { sndClick(); startMatch(); });
+el("endMenuBtn").addEventListener("click", function() { sndClick(); quitToMenu(); });
+el("resumeBtn").addEventListener("click", function() { sndClick(); togglePause(false); });
+el("restartBtn").addEventListener("click", function() { sndClick(); startMatch(); });
+el("quitBtn").addEventListener("click", function() { sndClick(); quitToMenu(); });
+el("pauseBtn").addEventListener("click", function() {
+  ensureAudio();
+  if (S.state === "menu" || S.state === "end" || S.state === "roundEnd") return;
+  togglePause(!S.paused);
+});
+el("soundBtn").addEventListener("click", function() {
+  S.sound = !S.sound; SAVE.sound = S.sound; persist();
+  el("soundBtn").textContent = S.sound ? "🔊" : "🔇";
+  if (S.sound) { ensureAudio(); sndClick(); }
+  else if (AC) { try { AC.close(); } catch (e) {} AC = null; }
+});
+el("langBtn").addEventListener("click", function() {
+  S.lang = S.lang === "bn" ? "en" : "bn";
+  SAVE.lang = S.lang; persist();
+  sndClick();
+  applyLang();
+});
+el("coinChip").addEventListener("click", function() { sndClick(); });
+document.querySelectorAll("#diffSeg button").forEach(function(b) {
+  b.addEventListener("click", function() {
+    S.diff = b.getAttribute("data-diff");
+    SAVE.diff = S.diff; persist();
+    sndClick();
+    applyLang();
+  });
+});
+document.querySelectorAll("#charSeg button").forEach(function(b) {
+  b.addEventListener("click", function() {
+    S.char = b.getAttribute("data-char");
+    SAVE.char = S.char; persist();
+    sndClick();
+    applyLang();
+  });
+});
+el("playerName").addEventListener("change", function() {
+  var v = el("playerName").value.trim();
+  SAVE.name = v || T[S.lang].defaultName;
+  el("playerName").value = SAVE.name;
+  persist();
+});
+
+/* ================= main loop + init ================= */
+var lastTs = 0;
+function frame(ts) {
+  requestAnimationFrame(frame);
+  var dt = Math.min(0.05, (ts - lastTs) / 1000 || 0.016);
+  lastTs = ts;
+  if (!S.paused) update(dt);
+  render();
+}
+el("soundBtn").textContent = S.sound ? "🔊" : "🔇";
+resize();
+applyLang();
+refreshMenuStats();
+updateHUD();
+requestAnimationFrame(function(ts) { lastTs = ts; requestAnimationFrame(frame); });
+</script>
+</body>
+</html>
